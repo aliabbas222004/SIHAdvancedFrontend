@@ -47,7 +47,7 @@ const Inventory = () => {
     // You can send `submittedData` to your backend here:
     try {
       console.log(selectedItems);
-      const res = await fetch('http://localhost:5000/inventory/addItemtoInventory', {
+      const res = await fetch('https://sihadvancedbackend.onrender.com/inventory/addItemtoInventory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectedItems),

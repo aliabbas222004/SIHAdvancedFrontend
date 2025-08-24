@@ -125,7 +125,7 @@ export default function BillForm({ items, resetItems }) {
     setSameAsBilling(false);
 
 
-    const response = await fetch('http://localhost:5000/inventory/update', {
+    const response = await fetch('https://sihadvancedbackend.onrender.com/inventory/update', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

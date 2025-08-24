@@ -10,7 +10,7 @@ export default function ItemSelector({ onAddItem }) {
     if (!query.trim()) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/items/search?q=${query}`);
+      const res = await fetch(`https://sihadvancedbackend.onrender.com/api/items/search?q=${query}`);
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       setResults(data);

@@ -17,7 +17,7 @@ const Company = () => {
     console.log('Submitting company data:', formData);
 
     try {
-      const response = await fetch('http://localhost:5000/company/addCompany', {
+      const response = await fetch('https://sihadvancedbackend.onrender.com/company/addCompany', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

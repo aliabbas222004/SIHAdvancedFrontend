@@ -16,7 +16,7 @@ const Item = () => {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/hsn/company')
+    fetch('https://sihadvancedbackend.onrender.com/hsn/company')
       .then(res => res.json())
       .then(data => setCompanies(data))
       .catch(err => console.error(err));
@@ -24,7 +24,7 @@ const Item = () => {
 
   useEffect(() => {
     if (form.company) {
-      fetch(`http://localhost:5000/hsn/itemType?company=${form.company}`)
+      fetch(`https://sihadvancedbackend.onrender.com/hsn/itemType?company=${form.company}`)
         .then(res => res.json())
         .then(data => setTypes(data))
         .catch(err => console.error(err));
@@ -42,7 +42,7 @@ const Item = () => {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/items/add', {
+      const res = await fetch('https://sihadvancedbackend.onrender.com/api/items/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
