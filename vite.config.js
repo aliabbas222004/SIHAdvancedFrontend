@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    allowedHosts: ["sihadvancedfrontend.onrender.com"], 
     host: '0.0.0.0', // 👈 important for Render
     port: 5173, // 👈 use Render’s assigned port
   },
