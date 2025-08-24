@@ -1,0 +1,211 @@
+/* InvoiceTemplate.css */
+
+.print-wrapper {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
+  margin: 10px auto;
+  width: 800px;
+  background: white;
+}
+
+/* Invoice container */
+.invoice-container {
+  padding: 10px 20px;
+  border: 1px solid #ccc;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #222;
+  padding-bottom: 10px;
+}
+
+.logo1 {
+  height: 60px;
+}
+
+.logo2 {
+  height: 40px;
+}
+
+.sImg{
+  text-align: center;
+}
+
+.company-details {
+  text-align: center;
+  flex: 1;
+}
+
+.company-details h2{
+  font-size: 25px;
+  margin-bottom: 5px;
+  margin-top: 0px;
+}
+
+.company-details p {
+  font-size: 10px;
+  margin-top: 0px;
+}
+
+.qr-section {
+  text-align: center;
+}
+
+.qr-section p{
+  font-size: 10px;
+}
+
+.qr {
+  height: 80px;
+  margin-bottom: 5px;
+}
+
+.copy-label {
+  font-weight: bold;
+  font-size: 10px;
+  text-align: right;
+  color: #444;
+}
+
+.info-grid {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0;
+  font-size: 9px;
+  line-height: 0.1;
+}
+
+.bill{
+  padding-top: 5px;
+  font-size: 12px;
+}
+
+.right{
+  padding: 0px;
+  margin-left:10px ;
+}
+
+.left{
+  padding: 0px;
+}
+
+
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 10px;
+}
+
+
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid #888;
+  /* padding: 8px; */
+  text-align: center;
+  font-size: 10px;
+}
+
+.text-right{
+  text-align: right !important;
+}
+
+.invoice-table thead {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.invoice-table tr.emptyRows td {
+  border-bottom: none ;
+  border-top: none ;
+  background-color: transparent;
+}
+
+.totAmt td{
+  border-bottom: none ;
+}
+
+.gst td{
+  border-bottom: none ;
+  border-top: none ;
+}
+
+
+.terms {
+  font-size: 9px;
+  color: #555;
+  margin-top: 15px;
+}
+
+.terms ul {
+  margin-left: 15px;
+  list-style-type: decimal;
+  padding-left: 10px;
+}
+
+.tax-note {
+  margin-top: 10px;
+  font-style: italic;
+  color: #666;
+}
+.amtInWords{
+  text-align: left !important;
+}
+
+.signature {
+  font-weight: 500;
+  font-size: 10px;
+  text-align: center;
+}
+
+
+/* Page break between copies */
+.page-break {
+  page-break-after: always;
+}
+
+@media print {
+  body * {
+    visibility: hidden; 
+  }
+
+  .print-wrapper, .print-wrapper * {
+    visibility: visible;
+  }
+
+  .print-wrapper {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Force page break after first copy */
+  .page-break {
+    display: block;
+    page-break-after: always;
+  }
+
+  .info-grid {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  .info-grid .left{
+    width: 50%;
+  }
+  .info-grid .right {
+    width: 50%;
+  }
+
+
+}
