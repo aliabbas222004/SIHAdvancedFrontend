@@ -67,8 +67,27 @@ export default function BillForm({ items, resetItems }) {
     container.appendChild(duplicateLabel);
 
     document.body.appendChild(container);
-    window.print();
-    document.body.removeChild(container);
+    const style = document.createElement("style");
+    style.textContent = `
+    @media print {
+      body * { visibility: hidden !important; }
+      #print-wrapper, #print-wrapper * { visibility: visible !important; }
+      #print-wrapper { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  `;
+    document.head.appendChild(style);
+
+    // ✅ Let browser paint before printing
+    setTimeout(() => {
+      window.print();
+
+      // ✅ Cleanup AFTER print finishes
+      window.onafterprint = () => {
+        document.body.removeChild(container);
+        document.head.removeChild(style);
+      };
+    }, 500);
+
   };
 
 
