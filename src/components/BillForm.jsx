@@ -109,6 +109,8 @@ export default function BillForm({ items, resetItems }) {
     }
 
 
+    
+
     const mockResponse = {
       billDate: date,
       billId,
@@ -143,16 +145,28 @@ export default function BillForm({ items, resetItems }) {
     setCustGST('');
     setSameAsBilling(false);
 
+    console.log("This line executres")
 
-    const response = await fetch('https://sihadvancedbackend.onrender.com/inventory/update', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        items
-      }),
-    });
+    try {
+      const response = await fetch('http://localhost:5000/inventory/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+      });
+
+
+
+
+      const wait = await fetch('http://localhost:5000/api/bill/addBill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mockResponse), // ✅ no extra wrapper needed
+      });
+
+    } catch (err) {
+      console.error("❌ Error while saving bill:", err);
+    }
+
 
 
   };

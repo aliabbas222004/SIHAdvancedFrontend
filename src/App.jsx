@@ -83,6 +83,9 @@ import HSN from './components/HSN';
 import Company from './components/Company';
 import ShowInventory from './components/ShowInventory';
 import ItemDetails from './components/ItemDetails';
+import Customer from './components/Customer';
+import Sales from './components/Sales';
+import Profit from './components/Profit';
 
 export default function App() {
   return (
@@ -96,6 +99,9 @@ export default function App() {
         <Route path="/company" element={<Company />} />
         <Route path='/inventory/show' element={<ShowInventory/>}></Route>
         <Route path='/itemDetails' element={<ItemDetails/>}></Route>
+        <Route path='/addCustomer' element={<Customer/>}></Route>
+        <Route path='/sales' element={<Sales/>}></Route>
+        <Route path='/profit' element={<Profit/>}></Route>
       </Routes>
     // </Router>
   );

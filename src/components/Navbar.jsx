@@ -2,7 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {
-    const location = useLocation(); 
+    const location = useLocation();
 
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -76,6 +76,54 @@ const Navbar = () => {
                                 Company
                             </Link>
                         </li>
+
+                        <div className="dropdown">
+                            <button
+                                className="btn dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Analytics
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li>
+                                    <a className="dropdown-item" href="/sales">
+                                        Sales
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/profit">
+                                        Profit
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="dropdown">
+                            <button
+                                className="btn dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Customer
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li>
+                                    <a className="dropdown-item" href="/addCustomer">
+                                        Add
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="#">
+                                        Edit
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </ul>
                 </div>
             </div>
