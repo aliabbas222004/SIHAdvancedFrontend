@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import InvoiceTemplate from './InvoiceTemplate';
 
 export default function BillForm({ items, resetItems }) {
+  const [customers, setCustomers] = useState([]);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
   const [date, setDate] = useState('');
   const [billId, setBillId] = useState('');
   const [custName, setCustName] = useState('');
@@ -20,8 +23,23 @@ export default function BillForm({ items, resetItems }) {
   const [generatedBillData, setGeneratedBillData] = useState(null);
   const invoiceRef = useRef();
 
-  const totalAmount = items.reduce((sum, item) => sum + item.givenPrice * item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
 
+  // 🔹 Fetch customers
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/customer`);
+        const data = await res.json();
+        setCustomers(data);
+      } catch (err) {
+        console.error("❌ Error fetching customers:", err);
+      }
+    };
+    fetchCustomers();
+  }, []);
+
+  // 🔹 Auto-fill shipping if "same as billing"
   useEffect(() => {
     if (sameAsBilling) {
       setshipCustName(custName);
@@ -38,7 +56,22 @@ export default function BillForm({ items, resetItems }) {
     }
   }, [sameAsBilling, custName, custPhone, billAdd, billState, custGST]);
 
+  // 🔹 Handle customer selection
+  const handleCustomerChange = (e) => {
+    const custId = e.target.value;
+    const customer = customers.find(c => c._id === custId);
+    setSelectedCustomer(customer);
 
+    if (customer) {
+      setCustName(customer.name);
+      setCustPhone(customer.phoneNo);
+      setBillAdd(customer.address);
+      setBillState(customer.state);
+      setCustGST(customer.GSTIN || '');
+    }
+  };
+
+  // 🔹 Print invoice
   useEffect(() => {
     if (generatedBillData && invoiceRef.current) {
       const timer = setTimeout(() => {
@@ -77,20 +110,16 @@ export default function BillForm({ items, resetItems }) {
   `;
     document.head.appendChild(style);
 
-    // ✅ Let browser paint before printing
     setTimeout(() => {
       window.print();
-
-      // ✅ Cleanup AFTER print finishes
       window.onafterprint = () => {
         document.body.removeChild(container);
         document.head.removeChild(style);
       };
     }, 500);
-
   };
 
-
+  // 🔹 Generate Bill
   const generateBill = async () => {
     if (!billAdd || !shipAdd || !custPhone) {
       setMessage({ type: 'error', text: 'Please fill all required fields.' });
@@ -101,15 +130,11 @@ export default function BillForm({ items, resetItems }) {
       return;
     }
     for (const item of items) {
-      console.log("Hello", item);
       if (item.availableQuantity < item.quantity) {
         setMessage({ type: 'error', text: `You don't have enough stock for ${item.itemName}` });
-        return; // ✅ this now exits the enclosing function
+        return;
       }
     }
-
-
-    
 
     const mockResponse = {
       billDate: date,
@@ -128,8 +153,9 @@ export default function BillForm({ items, resetItems }) {
         itemId: item.itemId,
         HSN: item.HSN,
         itemName: item.itemName || `Item ${item.itemId}`,
+        intialPrice:item.intialPrice,
+        finalPrice: item.finalPrice,
         selectedQuantity: item.quantity,
-        unitPrice: item.givenPrice
       })),
       totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       totalPrice: totalAmount
@@ -145,34 +171,27 @@ export default function BillForm({ items, resetItems }) {
     setCustGST('');
     setSameAsBilling(false);
 
-    console.log("This line executres")
-
     try {
-      const response = await fetch('http://localhost:5000/inventory/update', {
+      await fetch(`${import.meta.env.VITE_API_URL}/inventory/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ items }),
       });
 
-
-
-
-      const wait = await fetch('http://localhost:5000/api/bill/addBill', {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/bill/addBill`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockResponse), // ✅ no extra wrapper needed
+        body: JSON.stringify(mockResponse),
       });
-
     } catch (err) {
       console.error("❌ Error while saving bill:", err);
     }
-
-
-
   };
 
   return (
     <div className="container mt-4 mb-5 p-4 bg-white rounded shadow">
+      
+      {/* Date & Bill ID */}
       <div className="row">
         <div className="col-12 col-md-6">
           <div className="mb-3">
@@ -188,12 +207,23 @@ export default function BillForm({ items, resetItems }) {
         </div>
       </div>
 
+      {/* Customer Selection */}
+      <div className="mb-3">
+        <label className="form-label">Select Customer</label>
+        <select className="form-select" onChange={handleCustomerChange}>
+          <option value="">-- Select Customer --</option>
+          {customers.map(cust => (
+            <option key={cust._id} value={cust._id}>
+              {cust.name} ({cust.phoneNo})
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="row">
         {/* Billing Details */}
         <div className="col-12 col-md-6">
           <h5>Billing Details</h5>
-
           <div className="mb-3">
             <label className="form-label">Customer Name</label>
             <input type="text" className="form-control" value={custName} onChange={(e) => setCustName(e.target.value)} />
@@ -262,11 +292,7 @@ export default function BillForm({ items, resetItems }) {
 
       {/* Button */}
       <div className="text-center mt-3">
-        <button
-          onClick={generateBill}
-          disabled={loading}
-          className="btn btn-primary px-5"
-        >
+        <button onClick={generateBill} disabled={loading} className="btn btn-primary px-5">
           {loading ? 'Generating Bill...' : 'Generate Bill'}
         </button>
       </div>

@@ -2,6 +2,7 @@
 import React from 'react';
 
 export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
+  console.log(items);
   const handleUpdate = (index, field, value) => {
     const item = items[index];
     if (!item) return;
@@ -10,10 +11,14 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
       const qty = parseInt(value, 10);
       if (isNaN(qty) || qty < 1) return;
       onUpdate(item.itemId, 'quantity', qty);
-    } else if (field === 'givenPrice') {
+    } else if (field === 'initialPrice') {
       const price = parseFloat(value);
       if (isNaN(price) || price < 0) return;
-      onUpdate(item.itemId, 'givenPrice', price);
+      onUpdate(item.itemId, 'initialPrice', price);
+    }else if (field === 'finalPrice') {
+      const price = parseFloat(value);
+      if (isNaN(price) || price < 0) return;
+      onUpdate(item.itemId, 'finalPrice', price);
     }
   };
 
@@ -39,22 +44,31 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
             <tr>
               <th>Item Name</th>
               <th>Available Quantity</th>
-              <th>Given Price (₹)</th>
+              <th>Initial Price (₹)</th>
+              <th>Final Price (₹)</th>
               <th>Quantity</th>
               <th>Total (₹)</th>
               <th>Remove</th>
             </tr>
           </thead>
           <tbody>
-            {items.map(({ itemName,availableQuantity, givenPrice, quantity }, i) => (
+            {items.map(({ itemName,availableQuantity,initialPrice, finalPrice, quantity }, i) => (
               <tr key={i}>
                 <td>{itemName}</td>
                 <td>{availableQuantity}</td>
                 <td>
                   <input
                     type="number"
-                    value={givenPrice}
-                    onChange={(e) => handleUpdate(i, 'givenPrice', e.target.value)}
+                    value={initialPrice}
+                    onChange={(e) => handleUpdate(i, 'initialPrice', e.target.value)}
+                    className="form-control form-control-sm text-center"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    value={finalPrice}
+                    onChange={(e) => handleUpdate(i, 'finalPrice', e.target.value)}
                     className="form-control form-control-sm text-center"
                   />
                 </td>
@@ -67,7 +81,7 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
                   />
                 </td>
                 <td className="fw-bold">
-                  {(givenPrice * quantity).toFixed(2)}
+                  {(finalPrice * quantity).toFixed(2)}
                 </td>
                 <td>
                   <button

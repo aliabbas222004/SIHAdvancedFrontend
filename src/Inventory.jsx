@@ -1,25 +1,9 @@
 import React, { useState } from 'react';
 import ItemSelector from './components/ItemSelector';
-import SelectedItemsTable from './components/SelectedItemsTable';
 import SelectedItemsForInventory from './components/SelectedItemsForInventory';
 
 const Inventory = () => {
   const [selectedItems, setSelectedItems] = useState([]);
-
-  const [formData, setFormData] = useState({
-    itemId: '',
-    quantity: '',
-    tPrice: '',
-  });
-
-  const [foundItem, setFoundItem] = useState(null);
-  const [submittedData, setSubmittedData] = useState([]);
-  const [error, setError] = useState('');
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
 
   const addItem = (item) => {
     setSelectedItems((prev) => {
@@ -35,8 +19,8 @@ const Inventory = () => {
           ...prev,
           {
             itemId: item.itemId,
-            totalPrice: item.itemPrice,
             quantity: 1,
+            purchaseDate: new Date().toISOString().split("T")[0], // default today's date
           }
         ];
       }
@@ -44,10 +28,9 @@ const Inventory = () => {
   };
 
   const handleFinalSubmit = async () => {
-    // You can send `submittedData` to your backend here:
     try {
       console.log(selectedItems);
-      const res = await fetch('https://sihadvancedbackend.onrender.com/inventory/addItemtoInventory', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/inventory/addItemtoInventory`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectedItems),
@@ -69,9 +52,14 @@ const Inventory = () => {
       prev.map((item) =>
         item.itemId === itemId
           ? {
-            ...item,
-            [field]: field === 'quantity' ? Math.max(1, parseInt(value, 10)) : parseFloat(value)
-          }
+              ...item,
+              [field]:
+                field === 'quantity'
+                  ? Math.max(1, parseInt(value, 10))
+                  : field === 'purchaseDate'
+                  ? value
+                  : parseFloat(value),
+            }
           : item
       )
     );
@@ -92,6 +80,7 @@ const Inventory = () => {
           onRemove={removeItem}
         />
       </div>
+
       {selectedItems.length > 0 && (
         <div className="d-flex justify-content-center mt-4">
           <button
@@ -102,7 +91,6 @@ const Inventory = () => {
           </button>
         </div>
       )}
-
     </>
   );
 };

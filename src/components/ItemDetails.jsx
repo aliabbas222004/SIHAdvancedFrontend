@@ -26,7 +26,7 @@ export default function ItemDetails() {
         const fetchDetails = async () => {
             try {
                 const res = await fetch(
-                    `https://sihadvancedbackend.onrender.com/api/items/findDetails?q=${state.item.itemId}`
+                    `${import.meta.env.VITE_API_URL}/api/items/findDetails?q=${state.item.itemId}`
                 );
                 const data = await res.json();
                 const item = data[0];

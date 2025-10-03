@@ -23,9 +23,10 @@ export default function HomePage() {
             itemId: item.itemId,
             HSN: item.HSN,
             itemName: item.itemName,
-            givenPrice: item.itemPrice,
+            initialPrice: item.priceOfStock/item.quantityInStock,
+            finalPrice: item.priceOfStock/item.quantityInStock,
             quantity: 1,
-            availableQuantity:item.availableQuantity,
+            availableQuantity:item.quantityInStock,
           }
         ];
       }

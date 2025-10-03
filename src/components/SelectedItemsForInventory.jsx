@@ -10,10 +10,12 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
       const qty = parseInt(value, 10);
       if (isNaN(qty) || qty < 1) return;
       onUpdate(item.itemId, 'quantity', qty);
-    } else if (field === 'totalPrice') {
+    } else if (field === 'price') {
       const price = parseFloat(value);
       if (isNaN(price) || price < 0) return;
-      onUpdate(item.itemId, 'totalPrice', price);
+      onUpdate(item.itemId, 'price', price);
+    } else if (field === 'date') {
+      onUpdate(item.itemId, 'date', value);
     }
   };
 
@@ -21,6 +23,9 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
     const item = items[index];
     if (item) onRemove(item.itemId);
   };
+
+  // get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split("T")[0];
 
   if (items.length === 0) {
     return (
@@ -38,19 +43,20 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
           <thead className="table-light">
             <tr>
               <th>Item Name</th>
-              <th>Quantity</th>
-              <th>Total Price (₹)</th>
+              <th>Purchase Quantity</th>
+              <th>Purchase Price (₹)</th>
+              <th>Purchase Date</th>
               <th>Remove</th>
             </tr>
           </thead>
           <tbody>
-            {items.map(({ itemId, totalPrice, quantity }, i) => (
+            {items.map(({ itemId, quantity, price, date }, i) => (
               <tr key={i}>
                 <td>{itemId}</td>
                 <td>
                   <input
                     type="number"
-                    value={quantity}
+                    value={quantity || ""}
                     onChange={(e) => handleUpdate(i, 'quantity', e.target.value)}
                     className="form-control form-control-sm text-center"
                   />
@@ -58,12 +64,19 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
                 <td>
                   <input
                     type="number"
-                    value={totalPrice}
-                    onChange={(e) => handleUpdate(i, 'totalPrice', e.target.value)}
+                    value={price || ""}
+                    onChange={(e) => handleUpdate(i, 'price', e.target.value)}
                     className="form-control form-control-sm text-center"
                   />
                 </td>
-                
+                <td>
+                  <input
+                    type="date"
+                    value={date ? date.split('T')[0] : today}
+                    onChange={(e) => handleUpdate(i, 'date', e.target.value)}
+                    className="form-control form-control-sm text-center"
+                  />
+                </td>
                 <td>
                   <button
                     onClick={() => handleRemove(i)}
@@ -80,25 +93,34 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
 
       {/* Card view for small screens */}
       <div className="d-md-none">
-        {items.map(({ itemId, totalPrice, quantity }, i) => (
+        {items.map(({ itemId, quantity, price, date }, i) => (
           <div key={i} className="card mb-3 shadow-sm">
             <div className="card-body">
               <h5 className="card-title">{itemId}</h5>
               <div className="mb-2">
-                <label className="form-label small">Total Price (₹)</label>
+                <label className="form-label small">Purchase Quantity</label>
                 <input
                   type="number"
-                  value={totalPrice}
-                  onChange={(e) => handleUpdate(i, 'totalPrice', e.target.value)}
+                  value={quantity || ""}
+                  onChange={(e) => handleUpdate(i, 'quantity', e.target.value)}
                   className="form-control form-control-sm"
                 />
               </div>
               <div className="mb-2">
-                <label className="form-label small">Quantity</label>
+                <label className="form-label small">Purchase Price (₹)</label>
                 <input
                   type="number"
-                  value={quantity}
-                  onChange={(e) => handleUpdate(i, 'quantity', e.target.value)}
+                  value={price || ""}
+                  onChange={(e) => handleUpdate(i, 'price', e.target.value)}
+                  className="form-control form-control-sm"
+                />
+              </div>
+              <div className="mb-2">
+                <label className="form-label small">Purchase Date</label>
+                <input
+                  type="date"
+                  value={date ? date.split('T')[0] : today}
+                  onChange={(e) => handleUpdate(i, 'date', e.target.value)}
                   className="form-control form-control-sm"
                 />
               </div>

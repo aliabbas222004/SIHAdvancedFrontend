@@ -12,7 +12,7 @@ const ShowInventory = () => {
     const fetchAllItems = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/items/getAllItems`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/items/getAllItems`);
         if (!res.ok) throw new Error('Failed to fetch all items');
         const data = await res.json();
         console.log(data);
@@ -32,7 +32,7 @@ const ShowInventory = () => {
     setLoading(true);
     try {
       const res = await fetch(
-        `https://sihadvancedbackend.onrender.com/api/items/search?q=${query}`
+        `${import.meta.env.VITE_API_URL}/api/items/search?q=${query}`
       );
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();

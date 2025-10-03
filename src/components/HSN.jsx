@@ -10,7 +10,7 @@ const HSN = () => {
 
 
   useEffect(() => {
-      fetch('https://sihadvancedbackend.onrender.com/hsn/company')
+      fetch(`${import.meta.env.VITE_API_URL}/hsn/company`)
         .then(res => res.json())
         .then(data => setCompanies(data))
         .catch(err => console.error(err));
@@ -20,7 +20,7 @@ const HSN = () => {
 
   const handleAdd = async () => {
     try {
-      const res = await fetch('https://sihadvancedbackend.onrender.com/hsn/addHsn', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/hsn/addHsn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

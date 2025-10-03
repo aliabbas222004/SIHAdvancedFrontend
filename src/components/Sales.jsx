@@ -11,7 +11,7 @@ const Sales = () => {
     if (mode === "month") query = `month=${month}&year=${year}`;
     if (mode === "year") query = `year=${year}`;
     try {
-      const res = await fetch(`http://localhost:5000/analytics/sales?${query}`);
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/analytics/sales?${query}`);
       const data = await res.json();
       setSales(data);
     } catch (err) {

@@ -61,7 +61,7 @@ const InvoiceTemplate = ({
 
     tableData.forEach(item => {
       const hsn = item.HSN;
-      const total = item.unitPrice * item.selectedQuantity;
+      const total = item.finalPrice * item.selectedQuantity;
 
       if (!taxMap[hsn]) {
         taxMap[hsn] = {
@@ -162,10 +162,10 @@ const InvoiceTemplate = ({
               <td>{item.itemName}</td>
               <td>{item.HSN}</td>
               <td>{item.selectedQuantity}</td>
-              <td>{item.unitPrice}</td>
+              <td>{item.finalPrice}</td>
               <td>18%</td>
-              <td>{(item.unitPrice / 1.18).toFixed(2)}</td>
-              <td>{((item.unitPrice / 1.18) * item.selectedQuantity).toFixed(2)}</td>
+              <td>{(item.finalPrice / 1.18).toFixed(2)}</td>
+              <td>{((item.finalPrice / 1.18) * item.selectedQuantity).toFixed(2)}</td>
             </tr>
           ))}
           {[...Array(emptyRowsCount)].map((_, idx) => (

@@ -24,7 +24,7 @@ const Customer = () => {
 
         if (formData.name && formData.phone && formData.address && formData.state) {
             try {
-                const response = await fetch("http://localhost:5000/customer/addCustomer", {
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/customer/addCustomer`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
