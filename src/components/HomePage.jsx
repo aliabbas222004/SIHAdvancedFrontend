@@ -33,6 +33,7 @@ export default function HomePage() {
     });
   };
 
+
   // Update price or quantity
   const updateItem = (itemId, field, value) => {
     setSelectedItems((prev) =>

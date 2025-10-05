@@ -153,13 +153,15 @@ export default function BillForm({ items, resetItems }) {
         itemId: item.itemId,
         HSN: item.HSN,
         itemName: item.itemName || `Item ${item.itemId}`,
-        intialPrice:item.intialPrice,
+        initialPrice:item.initialPrice,
         finalPrice: item.finalPrice,
         selectedQuantity: item.quantity,
       })),
       totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       totalPrice: totalAmount
     };
+
+
     setGeneratedBillData(mockResponse);
     setMessage({ type: 'success', text: 'Bill generated successfully!' });
 

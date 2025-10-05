@@ -86,6 +86,9 @@ import ItemDetails from './components/ItemDetails';
 import Customer from './components/Customer';
 import Sales from './components/Sales';
 import Profit from './components/Profit';
+import Transport from './components/Transport';
+import ShowTransport from './components/ShowTransport';
+import EditCustomer from './components/EditCustomer';
 
 export default function App() {
   return (
@@ -102,6 +105,9 @@ export default function App() {
         <Route path='/addCustomer' element={<Customer/>}></Route>
         <Route path='/sales' element={<Sales/>}></Route>
         <Route path='/profit' element={<Profit/>}></Route>
+        <Route path='/addTransport' element={<Transport/>}></Route>
+        <Route path='/showTransport' element={<ShowTransport/>}></Route>
+        <Route path='/editCustomer' element={<EditCustomer/>}></Route>
       </Routes>
     // </Router>
   );

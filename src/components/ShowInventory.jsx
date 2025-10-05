@@ -15,7 +15,6 @@ const ShowInventory = () => {
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/items/getAllItems`);
         if (!res.ok) throw new Error('Failed to fetch all items');
         const data = await res.json();
-        console.log(data);
         setResults(data);
       } catch (e) {
         console.error('Fetching all items failed', e);
@@ -36,6 +35,7 @@ const ShowInventory = () => {
       );
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
+      console.log(data);
       setResults(data);
     } catch (e) {
       console.error('Search failed', e);
@@ -90,11 +90,11 @@ const ShowInventory = () => {
               </thead>
               <tbody>
                 {results.map(
-                  ({ itemId, itemName, quantity }, i) => (
+                  ({ itemId, itemName, quantityInStock }, i) => (
                     <tr key={i}>
                       <td>{itemId}</td>
                       <td>{itemName}</td>
-                      <td>{quantity}</td>
+                      <td>{quantityInStock}</td>
                       <td>
                         <button
                           onClick={() => handleViewMore(i)}
@@ -113,7 +113,7 @@ const ShowInventory = () => {
           {/* Card view for small screens */}
           <div className="d-md-none">
             {results.map(
-              ({ itemId, itemName, availableQuantity }, i) => (
+              ({ itemId, itemName, quantityInStock }, i) => (
                 <div key={i} className="card mb-3 shadow-sm">
                   <div className="card-body p-3">
                     <h5 className="card-title text-center">
@@ -123,7 +123,7 @@ const ShowInventory = () => {
                       <label className="form-label">
                         Available quantity : &nbsp;
                       </label>
-                      {availableQuantity}
+                      {quantityInStock}
                     </div>
                     <div className="text-center">
                       <button
