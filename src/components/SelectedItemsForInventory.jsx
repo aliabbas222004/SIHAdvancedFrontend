@@ -14,8 +14,8 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
       const price = parseFloat(value);
       if (isNaN(price) || price < 0) return;
       onUpdate(item.itemId, 'price', price);
-    } else if (field === 'date') {
-      onUpdate(item.itemId, 'date', value);
+    } else if (field === 'purchaseDate') {
+      onUpdate(item.itemId, 'purchaseDate', value);
     }
   };
 
@@ -50,7 +50,7 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
             </tr>
           </thead>
           <tbody>
-            {items.map(({ itemId, quantity, price, date }, i) => (
+            {items.map(({ itemId, quantity, price, purchaseDate  }, i) => (
               <tr key={i}>
                 <td>{itemId}</td>
                 <td>
@@ -72,10 +72,17 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
                 <td>
                   <input
                     type="date"
-                    value={date ? date.split('T')[0] : today}
-                    onChange={(e) => handleUpdate(i, 'date', e.target.value)}
+                    value={
+                      purchaseDate
+                        ? typeof purchaseDate === "string"
+                          ? purchaseDate.split("T")[0]
+                          : new Date(purchaseDate).toISOString().split("T")[0]
+                        : today
+                    }
+                    onChange={(e) => handleUpdate(i, 'purchaseDate', e.target.value)}
                     className="form-control form-control-sm text-center"
                   />
+
                 </td>
                 <td>
                   <button
@@ -120,7 +127,7 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
                 <input
                   type="date"
                   value={date ? date.split('T')[0] : today}
-                  onChange={(e) => handleUpdate(i, 'date', e.target.value)}
+                  onChange={(e) => handleUpdate(i, 'purchaseDate', e.target.value)}
                   className="form-control form-control-sm"
                 />
               </div>
