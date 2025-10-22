@@ -122,6 +122,16 @@ const Navbar = () => {
                                         Edit
                                     </a>
                                 </li>
+                                <li>
+                                    <a className="dropdown-item" href="/addPayment">
+                                        Add Payment
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/ledger">
+                                        Show Ledger
+                                    </a>
+                                </li>
                             </ul>
                         </div>
 

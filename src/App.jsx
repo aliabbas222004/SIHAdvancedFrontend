@@ -89,6 +89,8 @@ import Profit from './components/Profit';
 import Transport from './components/Transport';
 import ShowTransport from './components/ShowTransport';
 import EditCustomer from './components/EditCustomer';
+import AddPayment from './components/Customer/AddPayment';
+import Ledger from './components/Customer/Ledger';
 
 export default function App() {
   return (
@@ -108,6 +110,8 @@ export default function App() {
         <Route path='/addTransport' element={<Transport/>}></Route>
         <Route path='/showTransport' element={<ShowTransport/>}></Route>
         <Route path='/editCustomer' element={<EditCustomer/>}></Route>
+        <Route path='/addPayment' element={<AddPayment/>}></Route>
+        <Route path='/ledger' element={<Ledger/>}></Route>
       </Routes>
     // </Router>
   );
