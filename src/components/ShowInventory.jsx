@@ -12,7 +12,7 @@ const ShowInventory = () => {
     const fetchAllItems = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/items/getAllItems`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/inventory/getEntireInventory`);
         if (!res.ok) throw new Error('Failed to fetch all items');
         const data = await res.json();
         setResults(data);

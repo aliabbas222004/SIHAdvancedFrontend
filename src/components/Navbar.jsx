@@ -7,6 +7,7 @@ const Navbar = () => {
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
             <div className="container">
+                
                 {/* Brand */}
                 <Link className="navbar-brand fw-bold" to="/">
                     Sunrise Interior Hub
@@ -44,6 +45,7 @@ const Navbar = () => {
                                 Add HSN
                             </Link>
                         </li>
+
                         <li className="nav-item">
                             <Link
                                 className={`nav-link ${location.pathname === "/item" ? "active" : ""}`}
@@ -52,22 +54,31 @@ const Navbar = () => {
                                 Add Item
                             </Link>
                         </li>
-                        <li className="nav-item">
-                            <Link
-                                className={`nav-link ${location.pathname === "/inventory" ? "active" : ""}`}
-                                to="/inventory"
+
+                        <div className="dropdown">
+                            <button
+                                className="btn dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
                             >
-                                Add to Inventory
-                            </Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link
-                                className={`nav-link ${location.pathname === "/inventory/show" ? "active" : ""}`}
-                                to="/inventory/show"
-                            >
-                                Show Inventory
-                            </Link>
-                        </li>
+                                Inventory
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li>
+                                    <a className="dropdown-item" href="/inventory/show">
+                                        Show
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/inventory">
+                                        Add
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
                         <li className="nav-item">
                             <Link
                                 className={`nav-link ${location.pathname === "/company" ? "active" : ""}`}
@@ -96,6 +107,11 @@ const Navbar = () => {
                                 <li>
                                     <a className="dropdown-item" href="/profit">
                                         Profit
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/monthReport">
+                                        Month Report
                                     </a>
                                 </li>
                             </ul>
