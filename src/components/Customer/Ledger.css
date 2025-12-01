@@ -1,0 +1,9 @@
+.payment-row {
+    background-color: #07af1b12 !important; /* light green */
+    color: #000;
+}
+
+.purchase-row {
+    background-color: #ffe5cc14 !important; /* light orange */
+    color: #000;
+}
