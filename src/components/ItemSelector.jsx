@@ -14,6 +14,7 @@ export default function ItemSelector({ onAddItem }) {
       if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       setResults(data);
+      console.log(data);
     } catch (e) {
       console.error('Search failed', e);
       setResults([]);

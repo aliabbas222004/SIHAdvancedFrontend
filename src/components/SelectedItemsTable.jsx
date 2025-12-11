@@ -44,6 +44,7 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
             <tr>
               <th>Item Name</th>
               <th>Available Quantity</th>
+              <th>Purchase Price (₹)</th>
               <th>Initial Price (₹)</th>
               <th>Final Price (₹)</th>
               <th>Quantity</th>
@@ -52,10 +53,11 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
             </tr>
           </thead>
           <tbody>
-            {items.map(({ itemName,availableQuantity,initialPrice, finalPrice, quantity }, i) => (
+            {items.map(({ itemName,availableQuantity,initialPrice, finalPrice,purchasePrice, quantity }, i) => (
               <tr key={i}>
                 <td>{itemName}</td>
                 <td>{availableQuantity}</td>
+                <td>{purchasePrice}</td>
                 <td>
                   <input
                     type="number"
@@ -99,16 +101,33 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
 
       {/* Card view for small screens */}
       <div className="d-md-none">
-        {items.map(({ itemName, givenPrice, quantity }, i) => (
+        {items.map(({ itemName,availableQuantity,initialPrice, finalPrice,purchasePrice, quantity }, i) => (
           <div key={i} className="card mb-3 shadow-sm">
             <div className="card-body">
               <h5 className="card-title">{itemName}</h5>
               <div className="mb-2">
-                <label className="form-label small">Given Price (₹)</label>
+                <label className="form-label small">Available Quantity : &nbsp;</label>
+                {availableQuantity}
+              </div>
+              <div className="mb-2">
+                <label className="form-label small">Purchase Price (₹) : &nbsp;</label>
+                {purchasePrice}
+              </div>
+              <div className="mb-2">
+                <label className="form-label small">Initial Price (₹)</label>
                 <input
                   type="number"
-                  value={givenPrice}
-                  onChange={(e) => handleUpdate(i, 'givenPrice', e.target.value)}
+                  value={initialPrice}
+                  onChange={(e) => handleUpdate(i, 'initialPrice', e.target.value)}
+                  className="form-control form-control-sm"
+                />
+              </div>
+              <div className="mb-2">
+                <label className="form-label small">Final Price (₹)</label>
+                <input
+                  type="number"
+                  value={finalPrice}
+                  onChange={(e) => handleUpdate(i, 'finalPrice', e.target.value)}
                   className="form-control form-control-sm"
                 />
               </div>
@@ -122,7 +141,7 @@ export default function SelectedItemsTable({ items, onUpdate, onRemove }) {
                 />
               </div>
               <p className="fw-bold mb-2">
-                Total: ₹{(givenPrice * quantity).toFixed(2)}
+                {/* Total: ₹{(givenPrice * quantity).toFixed(2)} */}
               </p>
               <button
                 onClick={() => handleRemove(i)}

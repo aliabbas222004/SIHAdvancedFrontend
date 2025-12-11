@@ -23,8 +23,9 @@ export default function HomePage() {
             itemId: item.itemId,
             HSN: item.HSN,
             itemName: item.itemName,
-            initialPrice: item.priceOfStock/item.quantityInStock,
-            finalPrice: item.priceOfStock/item.quantityInStock,
+            initialPrice: 0,
+            finalPrice: 0,
+            purchasePrice:item.latestPurchasePrice,
             quantity: 1,
             availableQuantity:item.quantityInStock,
           }
