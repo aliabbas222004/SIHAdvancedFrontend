@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import * as XLSX from "xlsx";
 
 const MonthReport = () => {
   const [month, setMonth] = useState("");
@@ -7,37 +8,75 @@ const MonthReport = () => {
 
   const handleSubmit = async () => {
     if (!month || !year) return;
+
     try {
       const res = await fetch(
         `${import.meta.env.VITE_API_URL}/analytics/monthlyReport?month=${month}&year=${year}`
       );
+
       const data = await res.json();
-      setReport(data);
+
+      // Sort by bill number
+      const sortedData = data.sort((a, b) => {
+        const aNo = parseInt(a.billId.split("/")[0].replace(/\D/g, ""));
+        const bNo = parseInt(b.billId.split("/")[0].replace(/\D/g, ""));
+        return aNo - bNo;
+      });
+
+      setReport(sortedData);
     } catch (err) {
-      console.error("Error fetching profit:", err);
+      console.error("Error fetching report:", err);
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExcelExport = () => {
+    if (!Array.isArray(report) || report.length === 0) return;
+
+    const excelData = report.map((bill, index) => ({
+      "Sr No": index + 1,
+      "Bill ID": bill.billId,
+      "Bill Date": new Date(bill.createdAt).toLocaleDateString(),
+      
+      "Customer Name": bill.customerName,
+      "Customer Phone": bill.customerPhone,
+      "Billing Address": bill.billAddress,
+      "Customer GST": bill.customerGST,
+      "Customer State": bill.customerState,
+
+      "Shipping Name": bill.shipCustName,
+      "Shipping Phone": bill.shipCustPhone,
+      "Shipping Address": bill.shippingAddress,
+      "Shipping GST": bill.shipCustGST,
+      "Shipping State": bill.shipCustState,
+      "Total Amount": bill.totalAmount,
+      
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Monthly Report");
+
+    XLSX.writeFile(
+      workbook,
+      `Monthly_Report_${month}_${year}.xlsx`
+    );
   };
 
   return (
     <div className="container my-5">
       <h2 className="text-center mb-4">📅 Monthly Report</h2>
 
-      {/* Form Wrapper */}
+      {/* Form */}
       {report.length === 0 && (
         <div className="d-flex justify-content-center">
           <div className="col-12 col-md-8 col-lg-6">
-
             <div className="card shadow-sm p-4">
               <h5 className="mb-3 fw-bold">Select Month & Year</h5>
 
               <div className="row">
-                {/* Month */}
                 <div className="col-12 col-md-6 mb-3">
-                  <label className="form-label fw-semibold">Month:</label>
+                  <label className="form-label fw-semibold">Month</label>
                   <select
                     className="form-select"
                     value={month}
@@ -59,20 +98,18 @@ const MonthReport = () => {
                   </select>
                 </div>
 
-                {/* Year */}
                 <div className="col-12 col-md-6 mb-3">
-                  <label className="form-label fw-semibold">Year:</label>
+                  <label className="form-label fw-semibold">Year</label>
                   <input
                     type="number"
                     className="form-control"
+                    placeholder="e.g. 2025"
                     value={year}
                     onChange={(e) => setYear(e.target.value)}
-                    placeholder="e.g., 2025"
                   />
                 </div>
               </div>
 
-              {/* Submit Button */}
               <div className="d-flex justify-content-center mt-3">
                 <button
                   className="btn btn-primary px-4"
@@ -83,24 +120,25 @@ const MonthReport = () => {
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       )}
 
-      {/* Report Section */}
+      {/* Report Table */}
       {Array.isArray(report) && report.length > 0 && (
-        <div className="mt-5" id="print-section">
+        <div className="mt-5">
           <div className="table-responsive">
             <table className="table table-bordered table-striped">
               <thead className="table-dark">
                 <tr>
                   <th>Bill ID</th>
+                  <th>Bill Date</th>
                   <th>Customer Name</th>
                   <th>Phone</th>
                   <th>GST</th>
+                  <th>State</th>
                   <th>Total Amount</th>
-                  <th>Date</th>
+                  
                 </tr>
               </thead>
 
@@ -108,74 +146,30 @@ const MonthReport = () => {
                 {report.map((bill, index) => (
                   <tr key={index}>
                     <td>{bill.billId}</td>
+                    <td>{new Date(bill.createdAt).toLocaleDateString()}</td>
                     <td>{bill.customerName}</td>
                     <td>{bill.customerPhone}</td>
-                    <td>{bill.customerGST || "—"}</td>
+                    <td>{bill.customerGST}</td>
+                    <td>{bill.customerState}</td>
                     <td>₹{bill.totalAmount}</td>
-                    <td>{new Date(bill.createdAt).toLocaleDateString()}</td>
+                    
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {/* PRINT BUTTON */}
+          {/* EXCEL BUTTON */}
           <div className="text-center mt-4">
-            <button className="btn btn-success px-4" onClick={handlePrint}>
-              🖨️ Print Report
+            <button
+              className="btn btn-success px-4"
+              onClick={handleExcelExport}
+            >
+              📊 Export to Excel
             </button>
           </div>
         </div>
       )}
-
-      {/* Print-Only CSS */}
-      <style>
-        {`
-  @media print {
-    body * {
-      visibility: hidden;
-    }
-    #print-section, #print-section * {
-      visibility: visible;
-    }
-    #print-section {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      padding: 10px;
-    }
-
-    /* Reduce font sizes */
-    #print-section table {
-      font-size: 12px !important;
-    }
-
-    #print-section th {
-      font-size: 13px !important;
-      padding: 4px !important;
-    }
-
-    #print-section td {
-      font-size: 12px !important;
-      padding: 4px !important;
-    }
-
-    #print-section h4,
-    #print-section h5,
-    #print-section h2 {
-      font-size: 16px !important;
-      margin-bottom: 10px !important;
-    }
-
-    /* Remove buttons during print */
-    button {
-      display: none !important;
-    }
-  }
-`}
-      </style>
-
     </div>
   );
 };

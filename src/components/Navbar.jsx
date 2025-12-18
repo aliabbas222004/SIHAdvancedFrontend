@@ -45,14 +45,30 @@ const Navbar = () => {
                                 Direct
                             </Link>
                         </li>
-                        <li className="nav-item">
-                            <Link
-                                className={`nav-link ${location.pathname === "/hsn" ? "active" : ""}`}
-                                to="/hsn"
+                        <div className="dropdown">
+                            <button
+                                className="btn dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
                             >
-                                Add HSN
-                            </Link>
-                        </li>
+                                HSN
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li>
+                                    <a className="dropdown-item" href="/showHSN">
+                                        Show
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/hsn">
+                                        Add
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        
 
                         <li className="nav-item">
                             <Link

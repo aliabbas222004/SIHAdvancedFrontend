@@ -93,6 +93,7 @@ import AddPayment from './components/Customer/AddPayment';
 import Ledger from './components/Customer/Ledger';
 import MonthReport from './components/Analytics/MonthReport';
 import Direct from './components/Trade/Direct';
+import ShowHSN from './components/HSN/ShowHSN';
 
 export default function App() {
   return (
@@ -116,6 +117,7 @@ export default function App() {
         <Route path='/ledger' element={<Ledger/>}></Route>
         <Route path='/monthReport' element={<MonthReport/>}></Route>
         <Route path='/direct' element={<Direct/>}></Route>
+        <Route path='/showHSN' element={<ShowHSN/>}></Route>
         
       </Routes>
     // </Router>
