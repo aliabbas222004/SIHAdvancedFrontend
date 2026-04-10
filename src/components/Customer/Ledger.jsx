@@ -1,44 +1,36 @@
 import React, { useEffect, useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import "./Ledger.css"
+import "./Ledger.css";
+
 const Ledger = () => {
     const [customers, setCustomers] = useState([]);
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [ledgerEntries, setLedgerEntries] = useState([]);
-    const [totals, setTotals] = useState({ credited: 0, debited: 0, balance: 0 });
+    const [totals, setTotals] = useState({ credit: 0, debit: 0 });
     const [isSubmitted, setIsSubmitted] = useState(false);
 
     const printRef = useRef();
 
-    // Fetch customers
     useEffect(() => {
         const fetchCustomers = async () => {
-            try {
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/customer`);
-                const data = await res.json();
-                setCustomers(data);
-            } catch (err) {
-                console.error("❌ Error fetching customers:", err);
-            }
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/customer`);
+            const data = await res.json();
+            setCustomers(data);
         };
         fetchCustomers();
     }, []);
 
     const handleCustomerChange = (e) => {
-        const custId = e.target.value;
-        const customer = customers.find((c) => c._id === custId);
-        setSelectedCustomer(customer || null);
+        const cust = customers.find(c => c._id === e.target.value);
+        setSelectedCustomer(cust || null);
         setLedgerEntries([]);
-        setTotals({ credited: 0, debited: 0, balance: 0 });
+        setTotals({ credit: 0, debit: 0 });
         setIsSubmitted(false);
     };
 
     const handleSubmit = async () => {
-        if (!selectedCustomer) {
-            alert("Please select a customer.");
-            return;
-        }
+        if (!selectedCustomer) return alert("Select customer");
 
         try {
             const res = await fetch(
@@ -46,247 +38,220 @@ const Ledger = () => {
             );
             const data = await res.json();
 
-            if (res.ok) {
-                const { bills, paymentRecord } = data;
-                const combined = [];
+            if (!res.ok) return;
 
-                // Add bills
-                bills.forEach((bill) => {
-                    combined.push({
-                        type: "Purchase",
-                        date: bill.createdAt,
-                        amount: bill.totalAmount,
-                        description: `Bill ID: ${bill.billId}`,
-                    });
+            const { bills, paymentRecord } = data;
+
+            let combined = [];
+
+            // Bills → DEBIT
+            bills.forEach(b => {
+                combined.push({
+                    date: b.createdAt,
+                    type: "Sales",
+                    description: `Bill ID: ${b.billId}`,
+                    debit: b.totalAmount,
+                    credit: 0,
                 });
+            });
 
-                // Add cash payments
-                paymentRecord?.cash?.forEach((c) => {
-                    combined.push({
-                        type: "Payment (Cash)",
-                        date: c.date,
-                        amount: c.amount,
-                        description: "-",
-                    });
+            // Payment Received
+            paymentRecord?.cash?.forEach(c => {
+                combined.push({
+                    date: c.date,
+                    type: "Cash Receipt",
+                    description: "-",
+                    debit: 0,
+                    credit: c.amount,
                 });
+            });
 
-                // Add gpay payments
-                paymentRecord?.gpay?.forEach((g) => {
-                    combined.push({
-                        type: "Payment (Online)",
-                        date: g.date,
-                        amount: g.amount,
-                        description: g.transactionId ? `Txn ID: ${g.transactionId}` : "-",
-                    });
+            paymentRecord?.gpay?.forEach(g => {
+                combined.push({
+                    date: g.date,
+                    type: "Digital Receipt",
+                    description: g.transactionId || "-",
+                    debit: 0,
+                    credit: g.amount,
                 });
+            });
 
-                combined.sort((a, b) => new Date(a.date) - new Date(b.date));
-                setLedgerEntries(combined);
+            // Payment Done
+            paymentRecord?.cashGiven?.forEach(c => {
+                combined.push({
+                    date: c.date,
+                    type: "Cash Payment",
+                    description: "-",
+                    debit: c.amount,
+                    credit: 0,
+                });
+            });
 
-                const totalDebited = combined
-                    .filter((e) => e.type === "Purchase")
-                    .reduce((sum, e) => sum + e.amount, 0);
+            paymentRecord?.gpayGiven?.forEach(g => {
+                combined.push({
+                    date: g.date,
+                    type: "Digital Payment",
+                    description: g.transactionId || "-",
+                    debit: g.amount,
+                    credit: 0,
+                });
+            });
 
-                const totalCredited = combined
-                    .filter((e) => e.type.startsWith("Payment"))
-                    .reduce((sum, e) => sum + e.amount, 0);
+            // Bills Received → CREDIT
+            paymentRecord?.billsReceived?.forEach(b => {
+                combined.push({
+                    date: b.date,
+                    type: "Purchase",
+                    description: `Bill ID: ${b.billId}`,
+                    debit: 0,
+                    credit: b.amount,
+                });
+            });
 
-                const balance = totalDebited - totalCredited;
+            // Sort by date
+            combined.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                setTotals({ credited: totalCredited, debited: totalDebited, balance });
-                setIsSubmitted(true);
-            } else {
-                console.error("❌ Failed to fetch payments:", data.message);
-            }
-        } catch (error) {
-            console.error("❌ Error fetching payment details:", error);
+            // Totals
+            const totalCredit = combined.reduce((sum, e) => sum + e.credit, 0);
+            const totalDebit = combined.reduce((sum, e) => sum + e.debit, 0);
+
+            setLedgerEntries(combined);
+            setTotals({
+                credit: totalCredit,
+                debit: totalDebit,
+            });
+
+            setIsSubmitted(true);
+
+        } catch (err) {
+            console.error(err);
         }
     };
 
-    const formatDate = (isoDate) => {
-        if (!isoDate) return "-";
-        const date = new Date(isoDate);
-        return date.toLocaleDateString("en-IN", {
+    const formatDate = (d) =>
+        new Date(d).toLocaleDateString("en-IN", {
             day: "2-digit",
             month: "short",
             year: "numeric",
         });
-    };
 
-    const formatAmount = (amount) => {
-        return amount?.toLocaleString("en-IN") || "0";
-    };
+    const formatAmount = (a) => a?.toLocaleString("en-IN") || "0";
+
+    // Outstanding Calculation
+    const outstandingAmount = Math.abs(totals.debit - totals.credit);
+    const outstandingType =
+        totals.debit > totals.credit ? "Debit" : "Credit";
 
     const handleDownloadPDF = async () => {
-        const input = printRef.current;
-
-        // Convert visible HTML to canvas
-        const canvas = await html2canvas(input, { scale: 2 });
+        const canvas = await html2canvas(printRef.current, { scale: 2 });
         const imgData = canvas.toDataURL("image/png");
 
         const pdf = new jsPDF("p", "mm", "a4");
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        const width = pdf.internal.pageSize.getWidth();
+        const height = (canvas.height * width) / canvas.width;
 
-        // --- Company Header ---
-        const logoUrl = "/sunrise10-8.png"; // 🔥 Replace this
-        const compNameUrl = "/transparentlogo2.png";
-
-        const headerImg = new Image();
-        headerImg.src = logoUrl;
-
-        const headerImgName = new Image();
-        headerImgName.src = compNameUrl;
-
-        await new Promise((resolve) => {
-            headerImg.onload = resolve;
-        });
-
-        await new Promise((resolve) => {
-            headerImgName.onload = resolve;
-        });
-
-        // Logo top center
-
-        // Center both images properly
-        const pageWidth = pdf.internal.pageSize.getWidth();
-
-        const logoWidth = 14;
-        const logoHeight = 10;
-        const logoX = (pageWidth - logoWidth) / 2;
-        const logoY = 15;
-
-        pdf.addImage(headerImg, "PNG", logoX, logoY, logoWidth, logoHeight);
-
-        const nameWidth = 33;
-        const nameHeight = 9;
-        const nameX = (pageWidth - nameWidth) / 2;
-        const nameY = logoY + logoHeight + 1;
-
-        pdf.addImage(headerImgName, "PNG", nameX, nameY, nameWidth, nameHeight);
-
-        pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
-
-        const details = [
-            "E-39 Sardar Estate, Road No. 2, Ajwa Road, Vadodara, Gujarat, India",
-            "+91 9408758155",
-            "sunrise.interior.hub@gmail.com",
-            "GSTIN: 24ABZPB6331R1Z0",
-            "UDYAM-GJ-24-0140870"
-        ];
-
-        let textY = nameY + nameHeight + 3;
-
-        details.forEach((line) => {
-            pdf.text(line, pageWidth / 2, textY, { align: "center" });
-            textY += 3; // line spacing
-        });
-
-
-        pdf.addImage(imgData, "PNG", 10, textY+5, pdfWidth - 20, pdfHeight);
-
+        pdf.addImage(imgData, "PNG", 10, 10, width - 20, height);
         pdf.save(`Ledger_${selectedCustomer?.name}.pdf`);
     };
 
     return (
         <div className="container py-5">
-            {/* Form */}
+
             {!isSubmitted && (
-                <div className="row justify-content-center mb-4">
-                    <div className="col-md-6">
-                        <div className="card shadow-sm p-4">
-                            <h4 className="mb-4 text-center">Customer Ledger</h4>
+                <div className="col-md-6 mx-auto card p-4 shadow-sm">
+                    <h4 className="text-center mb-3">Customer Ledger</h4>
 
-                            <div className="mb-3">
-                                <label className="form-label">Select Customer</label>
-                                <select className="form-select" onChange={handleCustomerChange}>
-                                    <option value="">-- Select Customer --</option>
-                                    {customers.map((cust) => (
-                                        <option key={cust._id} value={cust._id}>
-                                            {cust.name} ({cust.phoneNo})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                    <select className="form-select mb-3" onChange={handleCustomerChange}>
+                        <option value="">-- Select Customer --</option>
+                        {customers.map(c => (
+                            <option key={c._id} value={c._id}>
+                                {c.name} ({c.phoneNo})
+                            </option>
+                        ))}
+                    </select>
 
-                            <div className="d-grid mt-3">
-                                <button className="btn btn-primary" onClick={handleSubmit}>
-                                    Show Ledger
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    <button className="btn btn-primary" onClick={handleSubmit}>
+                        Show Ledger
+                    </button>
                 </div>
             )}
 
-            {/* Ledger Section */}
             {ledgerEntries.length > 0 && (
                 <>
-                    {/* PDF Download Button */}
-                    <div className="text-center mb-3">
-                        <button className="btn btn-success" onClick={handleDownloadPDF}>
-                            📥 Download PDF
-                        </button>
+                    
+
+                    <div ref={printRef}>
+                        <div style={{ textAlign: "center", marginBottom: "10px" }}>
+                            <img
+                                src="transparentlogo1.png"
+                                alt="Company Logo"
+                                style={{ width: "70px", height: "auto" }}
+                            />
+
+                            <img src="transparentlogo2.png" alt="Company logo" style={{ width: "170px", height: "auto" }}/>
+                            <h6 style={{ marginTop: "5px" }}>
+                                E-39, Road No.2, Sardar Estate, Ajwa Road, Vadodara, Gujarat <br />
+                                +91-9408758155
+                            </h6>
+                            <br />
+                            <h5 style={{ marginTop: "10px" }}>
+                                Account statement for <strong>{selectedCustomer?.name}</strong>
+                            </h5>
+                        </div>
+                        <br />
+                        <div className="d-flex justify-content-around mb-3">
+                            <strong>Debit: ₹{formatAmount(totals.debit)}</strong>
+                            <strong>Credit: ₹{formatAmount(totals.credit)}</strong>
+                        </div>
+
+                        <table className="table table-bordered">
+                            <thead>
+                                <tr className="text-center">
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Debit</th>
+                                    <th>Credit</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {ledgerEntries.map((e, i) => (
+                                    <tr key={i}>
+                                        <td>{formatDate(e.date)}</td>
+                                        <td>{e.type}</td>
+                                        <td>{e.description}</td>
+                                        <td className="text-end">
+                                            {e.debit ? formatAmount(e.debit) : "-"}
+                                        </td>
+                                        <td className="text-end">
+                                            {e.credit ? formatAmount(e.credit) : "-"}
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {/* TOTAL ROW */}
+                                <tr style={{ fontWeight: "bold", background: "#f5f5f5" }}>
+                                    <td colSpan="3" className="text-center">TOTAL</td>
+                                    <td className="text-end">{formatAmount(totals.debit)}</td>
+                                    <td className="text-end">{formatAmount(totals.credit)}</td>
+                                </tr>
+
+                                {/* OUTSTANDING ROW */}
+                                <tr style={{ fontWeight: "bold", background: "#eaf7ea" }}>
+                                    <td colSpan="3" className="text-center">OUTSTANDING</td>
+                                    <td colSpan="2" className="text-center">
+                                        ₹{formatAmount(outstandingAmount)} {outstandingType}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
 
-                    {/* This part goes into the PDF */}
-                    <div ref={printRef}>
-                        {/* Totals */}
-                        <div className="row justify-content-center mb-3">
-                            <h5 className="text-center mb-3">
-                                Ledger for <strong>{selectedCustomer?.name}</strong>
-                            </h5>
-                            <div className="col-md-10 d-flex justify-content-around flex-wrap">
-                                <h6>
-                                    Total Debited:{" "}
-                                    <strong className="text-danger">₹{formatAmount(totals.debited)}</strong>
-                                </h6>
-                                <h6>
-                                    Total Credited:{" "}
-                                    <strong className="text-success">₹{formatAmount(totals.credited)}</strong>
-                                </h6>
-                                <h6>
-                                    Balance:{" "}
-                                    <strong className="text-primary">₹{formatAmount(totals.balance)}</strong>
-                                </h6>
-                            </div>
-                        </div>
-
-                        {/* Ledger Table */}
-                        <div className="row justify-content-center">
-                            <div className="col-md-10">
-                                <div className="table-responsive">
-                                    <table className="table table-bordered table-striped table-hover">
-                                        <thead className="table-light text-center">
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Type</th>
-                                                <th>Description</th>
-                                                <th>Amount (₹)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {ledgerEntries.map((entry, index) => (
-                                                <tr
-                                                    key={index}
-                                                    className={
-                                                        entry.type.startsWith("Payment")
-                                                            ? "payment-row"
-                                                            : "purchase-row"
-                                                    }
-                                                >
-                                                    <td className="text-center">{formatDate(entry.date)}</td>
-                                                    <td className="text-center">{entry.type}</td>
-                                                    <td className="text-center">{entry.description}</td>
-                                                    <td className="text-end">{formatAmount(entry.amount)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                    <div className="text-center mb-3">
+                        <button className="btn btn-success" onClick={handleDownloadPDF}>
+                            Download PDF
+                        </button>
                     </div>
                 </>
             )}

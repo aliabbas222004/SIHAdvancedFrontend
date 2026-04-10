@@ -19,6 +19,7 @@ const sampleBillData = {
   ],
   totalQuantity: 3,
   totalPrice: 2500,
+  paymentMode: "cash"
 };
 
 export default function PrintPreviewPage() {

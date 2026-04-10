@@ -19,7 +19,8 @@ const InvoiceTemplate = ({
   shipcustGST,
   tableData,
   totalQuantity,
-  totalPrice
+  totalPrice,
+  paymentMode
 }) => {
   const numberToWords = (num) => {
     const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -89,7 +90,7 @@ const InvoiceTemplate = ({
   const emptyTaxRowsCount = Math.max(0, 9 - taxRows.length);
   const renderInvoice = (copyLabel) => (
     <div className="invoice-container">
-      <div className="copy-label">{copyLabel}</div>
+      {/* <div className="copy-label">{copyLabel}</div> */}
       <div className="invoice-header">
         <div className='sImg'>
           <img src="/transparentlogo1.png" alt="logo" className="logo1" />
@@ -107,16 +108,30 @@ const InvoiceTemplate = ({
           </p>
         </div>
         <div className="qr-section" style={{ paddingRight: '10px' }}>
+          <p style={{ fontWeight: "bold", textTransform: "uppercase" }}>{copyLabel}</p>
           <QRCode value={`upi://pay?pa=7048897540@upi&pn=SunriseInteriorHub&am=${totalPrice}.00&cu=INR`}
             size={70}
             bgColor="#ffffff"
             fgColor="#000000"
             level="H" />
-          <p>Scan to pay</p>
+          <p className="btm-qr-section">
+            Scan to pay
+
+            <span style={{ display: "block", marginTop: "8px" }}>
+              <strong style={{ textTransform: "uppercase" }}>
+                Payment mode
+              </strong>
+            </span>
+
+            <span style={{ display: "block" }}>
+              {paymentMode}
+            </span>
+          </p>
+
         </div>
       </div>
 
-      <div className="info-grid row" style={{display:'flex'}}>
+      <div className="info-grid row" style={{ display: 'flex' }}>
         {/* Left Section */}
         <div className="left col-12 col-md-6">
           <p className="fw-bold bill mt-1">Bill Date: <span className="fw-normal">{formatDate(billDate)}</span></p>

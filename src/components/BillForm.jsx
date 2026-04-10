@@ -17,6 +17,7 @@ export default function BillForm({ items, resetItems }) {
   const [shipAdd, setShipAdd] = useState('');
   const [shipbillState, setshipBillState] = useState('');
   const [shipcustGST, setshipCustGST] = useState('');
+  const [paymentMode, setPaymentMode] = useState('');
   const [sameAsBilling, setSameAsBilling] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
@@ -25,6 +26,10 @@ export default function BillForm({ items, resetItems }) {
 
   const totalAmount = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
 
+  const paymentModes = [
+    { _id: "CASH", name: "Cash" },
+    { _id: "DIGITAL", name: "UPI / Card / Net Banking" }
+  ];
   // 🔹 Fetch customers
   useEffect(() => {
     const fetchCustomers = async () => {
@@ -121,7 +126,7 @@ export default function BillForm({ items, resetItems }) {
 
   // 🔹 Generate Bill
   const generateBill = async () => {
-    if (!billAdd || !shipAdd || !custPhone) {
+    if (!billAdd || !shipAdd || !custPhone || !paymentMode) {
       setMessage({ type: 'error', text: 'Please fill all required fields.' });
       return;
     }
@@ -153,12 +158,13 @@ export default function BillForm({ items, resetItems }) {
         itemId: item.itemId,
         HSN: item.HSN,
         itemName: item.itemName || `Item ${item.itemId}`,
-        initialPrice:item.initialPrice,
+        initialPrice: item.initialPrice,
         finalPrice: item.finalPrice,
         selectedQuantity: item.quantity,
       })),
       totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
-      totalPrice: totalAmount
+      totalPrice: totalAmount,
+      paymentMode: paymentMode
     };
 
 
@@ -192,7 +198,7 @@ export default function BillForm({ items, resetItems }) {
 
   return (
     <div className="container mt-4 mb-5 p-4 bg-white rounded shadow">
-      
+
       {/* Date & Bill ID */}
       <div className="row">
         <div className="col-12 col-md-6">
@@ -278,6 +284,18 @@ export default function BillForm({ items, resetItems }) {
             <input type="text" className="form-control" value={shipcustGST} onChange={(e) => setshipCustGST(e.target.value)} />
           </div>
         </div>
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Select Payment Mode</label>
+        <select className="form-select" onChange={(e) => setPaymentMode(e.target.value)}>
+          <option value="">-- Select Payment Mode --</option>
+          {paymentModes.map(mode => (
+            <option key={mode._id} value={mode._id}>
+              {mode.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Total */}

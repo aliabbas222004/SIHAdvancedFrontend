@@ -66,10 +66,16 @@
 }
 
 .copy-label {
+  /* margin-right: 10px; */
+  margin-bottom: 10px;
   font-weight: bold;
   font-size: 10px;
   text-align: right;
   color: #444;
+}
+
+.btm-qr-section{
+  margin-bottom: 0px !important;
 }
 
 .info-grid {
