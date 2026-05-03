@@ -10,6 +10,10 @@ const Ledger = () => {
     const [totals, setTotals] = useState({ credit: 0, debit: 0 });
     const [isSubmitted, setIsSubmitted] = useState(false);
 
+    // ✅ NEW: Date filters
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+
     const printRef = useRef();
 
     useEffect(() => {
@@ -44,7 +48,7 @@ const Ledger = () => {
 
             let combined = [];
 
-            // Bills → DEBIT
+            // 🔹 Bills → DEBIT
             bills.forEach(b => {
                 combined.push({
                     date: b.createdAt,
@@ -55,7 +59,7 @@ const Ledger = () => {
                 });
             });
 
-            // Payment Received
+            // 🔹 Payment Received
             paymentRecord?.cash?.forEach(c => {
                 combined.push({
                     date: c.date,
@@ -76,7 +80,7 @@ const Ledger = () => {
                 });
             });
 
-            // Payment Done
+            // 🔹 Payment Done
             paymentRecord?.cashGiven?.forEach(c => {
                 combined.push({
                     date: c.date,
@@ -97,7 +101,7 @@ const Ledger = () => {
                 });
             });
 
-            // Bills Received → CREDIT
+            // 🔹 Bills Received → CREDIT
             paymentRecord?.billsReceived?.forEach(b => {
                 combined.push({
                     date: b.date,
@@ -108,14 +112,47 @@ const Ledger = () => {
                 });
             });
 
-            // Sort by date
-            combined.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // ✅ DATE HANDLING
+            const today = new Date();
+            const start = fromDate ? new Date(fromDate) : null;
+            const end = toDate ? new Date(toDate) : today;
 
-            // Totals
-            const totalCredit = combined.reduce((sum, e) => sum + e.credit, 0);
-            const totalDebit = combined.reduce((sum, e) => sum + e.debit, 0);
+            let beforeStart = [];
+            let inRange = [];
 
-            setLedgerEntries(combined);
+            combined.forEach(entry => {
+                const entryDate = new Date(entry.date);
+
+                if (start && entryDate < start) {
+                    beforeStart.push(entry);
+                } else if (entryDate <= end) {
+                    inRange.push(entry);
+                }
+            });
+
+            // ✅ CARRY FORWARD CALCULATION
+            const carryDebit = beforeStart.reduce((sum, e) => sum + e.debit, 0);
+            const carryCredit = beforeStart.reduce((sum, e) => sum + e.credit, 0);
+            const carryBalance = carryDebit - carryCredit;
+
+            if (start) {
+                inRange.unshift({
+                    date: start,
+                    type: "Carry Forward",
+                    description: "Opening Balance",
+                    debit: carryBalance > 0 ? carryBalance : 0,
+                    credit: carryBalance < 0 ? Math.abs(carryBalance) : 0,
+                });
+            }
+
+            // ✅ SORT
+            inRange.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // ✅ TOTALS
+            const totalCredit = inRange.reduce((sum, e) => sum + e.credit, 0);
+            const totalDebit = inRange.reduce((sum, e) => sum + e.debit, 0);
+
+            setLedgerEntries(inRange);
             setTotals({
                 credit: totalCredit,
                 debit: totalDebit,
@@ -137,7 +174,6 @@ const Ledger = () => {
 
     const formatAmount = (a) => a?.toLocaleString("en-IN") || "0";
 
-    // Outstanding Calculation
     const outstandingAmount = Math.abs(totals.debit - totals.credit);
     const outstandingType =
         totals.debit > totals.credit ? "Debit" : "Credit";
@@ -170,6 +206,21 @@ const Ledger = () => {
                         ))}
                     </select>
 
+                    {/* ✅ DATE INPUTS */}
+                    <input
+                        type="date"
+                        className="form-control mb-2"
+                        value={fromDate}
+                        onChange={(e) => setFromDate(e.target.value)}
+                    />
+
+                    <input
+                        type="date"
+                        className="form-control mb-3"
+                        value={toDate}
+                        onChange={(e) => setToDate(e.target.value)}
+                    />
+
                     <button className="btn btn-primary" onClick={handleSubmit}>
                         Show Ledger
                     </button>
@@ -178,27 +229,21 @@ const Ledger = () => {
 
             {ledgerEntries.length > 0 && (
                 <>
-                    
-
                     <div ref={printRef}>
                         <div style={{ textAlign: "center", marginBottom: "10px" }}>
-                            <img
-                                src="transparentlogo1.png"
-                                alt="Company Logo"
-                                style={{ width: "70px", height: "auto" }}
-                            />
+                            <img src="transparentlogo1.png" alt="logo" style={{ width: "70px" }} />
+                            <img src="transparentlogo2.png" alt="logo" style={{ width: "170px" }} />
 
-                            <img src="transparentlogo2.png" alt="Company logo" style={{ width: "170px", height: "auto" }}/>
-                            <h6 style={{ marginTop: "5px" }}>
+                            <h6>
                                 E-39, Road No.2, Sardar Estate, Ajwa Road, Vadodara, Gujarat <br />
                                 +91-9408758155
                             </h6>
-                            <br />
-                            <h5 style={{ marginTop: "10px" }}>
+
+                            <h5>
                                 Account statement for <strong>{selectedCustomer?.name}</strong>
                             </h5>
                         </div>
-                        <br />
+
                         <div className="d-flex justify-content-around mb-3">
                             <strong>Debit: ₹{formatAmount(totals.debit)}</strong>
                             <strong>Credit: ₹{formatAmount(totals.credit)}</strong>
@@ -230,14 +275,12 @@ const Ledger = () => {
                                     </tr>
                                 ))}
 
-                                {/* TOTAL ROW */}
                                 <tr style={{ fontWeight: "bold", background: "#f5f5f5" }}>
                                     <td colSpan="3" className="text-center">TOTAL</td>
                                     <td className="text-end">{formatAmount(totals.debit)}</td>
                                     <td className="text-end">{formatAmount(totals.credit)}</td>
                                 </tr>
 
-                                {/* OUTSTANDING ROW */}
                                 <tr style={{ fontWeight: "bold", background: "#eaf7ea" }}>
                                     <td colSpan="3" className="text-center">OUTSTANDING</td>
                                     <td colSpan="2" className="text-center">
