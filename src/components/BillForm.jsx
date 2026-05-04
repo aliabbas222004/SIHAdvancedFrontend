@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import InvoiceTemplate from './InvoiceTemplate';
 
 export default function BillForm({ items, resetItems }) {
@@ -122,6 +124,78 @@ export default function BillForm({ items, resetItems }) {
         document.head.removeChild(style);
       };
     }, 500);
+  };
+
+  // 🔹 Download invoice as PDF (mobile-friendly)
+  const handleDownloadInvoicePDF = async () => {
+    try {
+      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const scale = isMobile ? 1.5 : 2;
+
+      const invoiceElement = document.getElementById('original-invoice');
+      if (!invoiceElement) return alert('Invoice not found');
+
+      const canvas = await html2canvas(invoiceElement, {
+        scale: scale,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowHeight: invoiceElement.scrollHeight,
+        windowWidth: invoiceElement.scrollWidth,
+      });
+
+      const imgData = canvas.toDataURL('image/png', 0.9);
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const contentWidth = pageWidth - (2 * margin);
+      
+      let contentHeight = (canvas.height * contentWidth) / canvas.width;
+      let currentY = margin;
+
+      while (contentHeight > 0) {
+        const remainingHeight = pageHeight - currentY - margin;
+        
+        if (contentHeight <= remainingHeight) {
+          pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, contentHeight);
+          break;
+        } else {
+          const portionHeight = remainingHeight;
+          const sourceHeight = (portionHeight * canvas.width) / contentWidth;
+          const cropCanvas = document.createElement('canvas');
+          cropCanvas.width = canvas.width;
+          cropCanvas.height = sourceHeight;
+          const ctx = cropCanvas.getContext('2d');
+          ctx.drawImage(canvas, 0, (canvas.height - contentHeight) * (canvas.width / contentWidth), canvas.width, sourceHeight);
+          
+          const croppedImgData = cropCanvas.toDataURL('image/png', 0.9);
+          pdf.addImage(croppedImgData, 'PNG', margin, currentY, contentWidth, portionHeight);
+          
+          contentHeight -= portionHeight;
+          
+          if (contentHeight > 0) {
+            pdf.addPage();
+            currentY = margin;
+          }
+        }
+      }
+
+      const pdfBlob = pdf.output('blob');
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Bill_${generatedBillData?.billId || 'Invoice'}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Error generating PDF. Please try again.');
+    }
   };
 
   // 🔹 Generate Bill
@@ -316,6 +390,15 @@ export default function BillForm({ items, resetItems }) {
           {loading ? 'Generating Bill...' : 'Generate Bill'}
         </button>
       </div>
+
+      {/* Download PDF Button - Shows after bill generated */}
+      {generatedBillData && (
+        <div className="text-center mt-3">
+          <button onClick={handleDownloadInvoicePDF} className="btn btn-success px-5 ms-2">
+            📥 Download as PDF
+          </button>
+        </div>
+      )}
 
       {/* Hidden Template */}
       {generatedBillData && (
