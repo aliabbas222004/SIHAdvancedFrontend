@@ -129,60 +129,61 @@ export default function BillForm({ items, resetItems }) {
   // 🔹 Download invoice as PDF (mobile-friendly)
   const handleDownloadInvoicePDF = async () => {
     try {
-      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const scale = isMobile ? 1.5 : 2;
-
       const invoiceElement = document.getElementById('original-invoice');
       if (!invoiceElement) return alert('Invoice not found');
 
+      // Wait a bit to ensure all content is rendered
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // For mobile: use scale 1, for desktop use 1.5
+      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const scale = isMobile ? 1 : 1.5;
+
+      // Capture element as canvas
       const canvas = await html2canvas(invoiceElement, {
         scale: scale,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowHeight: invoiceElement.scrollHeight,
-        windowWidth: invoiceElement.scrollWidth,
+        // Don't set windowHeight/windowWidth - let html2canvas auto-detect
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.9);
-
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const margin = 5;
-      const contentWidth = pageWidth - (2 * margin);
-      
-      let contentHeight = (canvas.height * contentWidth) / canvas.width;
-      let currentY = margin;
-
-      while (contentHeight > 0) {
-        const remainingHeight = pageHeight - currentY - margin;
-        
-        if (contentHeight <= remainingHeight) {
-          pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, contentHeight);
-          break;
-        } else {
-          const portionHeight = remainingHeight;
-          const sourceHeight = (portionHeight * canvas.width) / contentWidth;
-          const cropCanvas = document.createElement('canvas');
-          cropCanvas.width = canvas.width;
-          cropCanvas.height = sourceHeight;
-          const ctx = cropCanvas.getContext('2d');
-          ctx.drawImage(canvas, 0, (canvas.height - contentHeight) * (canvas.width / contentWidth), canvas.width, sourceHeight);
-          
-          const croppedImgData = cropCanvas.toDataURL('image/png', 0.9);
-          pdf.addImage(croppedImgData, 'PNG', margin, currentY, contentWidth, portionHeight);
-          
-          contentHeight -= portionHeight;
-          
-          if (contentHeight > 0) {
-            pdf.addPage();
-            currentY = margin;
-          }
-        }
+      // Only proceed if canvas has actual content
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas capture failed - element may not be visible');
       }
 
+      // Create PDF with appropriate scaling
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const imgWidth = pdfWidth - (2 * margin);
+
+      // Calculate image height maintaining aspect ratio
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      // Convert canvas to image
+      const imgData = canvas.toDataURL('image/png', 0.95);
+
+      // Single page or multi-page handling
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+
+      // Add additional pages if needed
+      heightLeft -= pdfHeight;
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      // Download PDF
       const pdfBlob = pdf.output('blob');
       const url = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -191,10 +192,12 @@ export default function BillForm({ items, resetItems }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      
+      // Cleanup
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      alert(`Error generating PDF: ${error.message}`);
     }
   };
 

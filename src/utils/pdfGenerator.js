@@ -8,23 +8,26 @@ import html2canvas from 'html2canvas';
  * @param {string} fileName - The name of the file to download (without .pdf extension)
  * @param {Object} options - Additional options
  * @param {string} options.orientation - 'p' for portrait, 'l' for landscape (default: 'p')
- * @param {number} options.margin - Margin in mm (default: 10)
+ * @param {number} options.margin - Margin in mm (default: 5)
  * @returns {Promise<void>}
  */
 export const generateAndDownloadPDF = async (element, fileName, options = {}) => {
   try {
     const {
       orientation = 'p',
-      margin = 10,
+      margin = 5,
     } = options;
 
     if (!element) {
       throw new Error('Element not found');
     }
 
+    // Wait to ensure element is fully rendered
+    await new Promise(resolve => setTimeout(resolve, 500));
+
     // Detect if mobile device
     const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const scale = isMobile ? 1.5 : 2; // Lower scale for mobile to avoid memory issues
+    const scale = isMobile ? 1 : 1.5; // Lower scale for mobile
 
     // Generate canvas with mobile-friendly options
     const canvas = await html2canvas(element, {
@@ -33,55 +36,38 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowHeight: element.scrollHeight,
-      windowWidth: element.scrollWidth,
+      // Don't set windowHeight/windowWidth - let html2canvas auto-detect
     });
 
-    const imgData = canvas.toDataURL('image/png', 0.9); // Compress image data
+    // Only proceed if canvas has actual content
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error('Canvas capture failed - element may not be visible');
+    }
+
+    const imgData = canvas.toDataURL('image/png', 0.95);
 
     const pdf = new jsPDF(orientation, 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const contentWidth = pageWidth - (2 * margin);
+    const imgWidth = pageWidth - (2 * margin);
 
     // Calculate height maintaining aspect ratio
-    let contentHeight = (canvas.height * contentWidth) / canvas.width;
-    let currentY = margin;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Handle multiple pages if content is too large
-    while (contentHeight > 0) {
-      const remainingHeight = pageHeight - currentY - margin;
+    // Single page or multi-page handling
+    let heightLeft = imgHeight;
+    let position = 0;
 
-      if (contentHeight <= remainingHeight) {
-        pdf.addImage(imgData, 'PNG', margin, currentY, contentWidth, contentHeight);
-        break;
-      } else {
-        // Calculate portion to fit on current page
-        const portionHeight = remainingHeight;
-        const sourceHeight = (portionHeight * canvas.width) / contentWidth;
-        const cropCanvas = document.createElement('canvas');
-        cropCanvas.width = canvas.width;
-        cropCanvas.height = sourceHeight;
-        const ctx = cropCanvas.getContext('2d');
-        ctx.drawImage(
-          canvas,
-          0,
-          (canvas.height - contentHeight) * (canvas.width / contentWidth),
-          canvas.width,
-          sourceHeight
-        );
+    // Add first page
+    pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
 
-        const croppedImgData = cropCanvas.toDataURL('image/png', 0.9);
-        pdf.addImage(croppedImgData, 'PNG', margin, currentY, contentWidth, portionHeight);
-
-        contentHeight -= portionHeight;
-
-        // Add new page if more content exists
-        if (contentHeight > 0) {
-          pdf.addPage();
-          currentY = margin;
-        }
-      }
+    // Add additional pages if needed
+    heightLeft -= pageHeight;
+    while (heightLeft >= 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
     }
 
     // Create blob and download (works on both desktop and mobile)
