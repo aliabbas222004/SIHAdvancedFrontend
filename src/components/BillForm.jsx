@@ -135,18 +135,15 @@ export default function BillForm({ items, resetItems }) {
       // Wait a bit to ensure all content is rendered
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // For mobile: use scale 1, for desktop use 1.5
-      const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const scale = isMobile ? 1 : 1.5;
-
-      // Capture element as canvas
+      // Capture element as canvas with fixed dimensions
       const canvas = await html2canvas(invoiceElement, {
-        scale: scale,
+        scale: 2,
         useCORS: true,
         allowTaint: true,
         logging: false,
         backgroundColor: '#ffffff',
-        // Don't set windowHeight/windowWidth - let html2canvas auto-detect
+        windowWidth: 794,
+        windowHeight: invoiceElement.scrollHeight,
       });
 
       // Only proceed if canvas has actual content
@@ -154,33 +151,32 @@ export default function BillForm({ items, resetItems }) {
         throw new Error('Canvas capture failed - element may not be visible');
       }
 
-      // Create PDF with appropriate scaling
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 5;
-      const imgWidth = pdfWidth - (2 * margin);
+      // Convert canvas to image
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
 
-      // Calculate image height maintaining aspect ratio
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const margin = 5;
+
+      const imgWidth = pdfWidth - (2 * margin); // 200mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      // Convert canvas to image
-      const imgData = canvas.toDataURL('image/png', 0.95);
+      // Add image to PDF (all at once)
+      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
 
-      // Single page or multi-page handling
-      let heightLeft = imgHeight;
-      let position = 0;
+      // If content is very tall, split across multiple pages
+      if (imgHeight > pdfHeight) {
+        let remainingHeight = imgHeight - pdfHeight;
+        let currentPosition = 0;
 
-      // Add first page
-      pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
-
-      // Add additional pages if needed
-      heightLeft -= pdfHeight;
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        while (remainingHeight > 0) {
+          pdf.addPage();
+          currentPosition -= pdfHeight;
+          pdf.addImage(imgData, 'JPEG', margin, currentPosition, imgWidth, imgHeight);
+          remainingHeight -= pdfHeight;
+        }
       }
 
       // Download PDF
@@ -192,7 +188,7 @@ export default function BillForm({ items, resetItems }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // Cleanup
       setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
@@ -405,7 +401,14 @@ export default function BillForm({ items, resetItems }) {
 
       {/* Hidden Template */}
       {generatedBillData && (
-        <div style={{ display: 'none' }}>
+        <div style={{ 
+          position: 'fixed',
+          left: '-9999px',
+          top: '-9999px',
+          width: '794px',
+          height: 'auto',
+          zIndex: '-1'
+        }}>
           <div ref={invoiceRef} id="original-invoice">
             <InvoiceTemplate {...generatedBillData} />
           </div>

@@ -183,18 +183,15 @@ const Ledger = () => {
             // Wait a bit to ensure all content is rendered
             await new Promise(resolve => setTimeout(resolve, 500));
 
-            // For mobile: use scale 1, for desktop use 1.5
-            const isMobile = /iPhone|iPad|iPod|Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const scale = isMobile ? 1 : 1.5;
-
-            // Generate canvas with mobile-friendly options
+            // Generate canvas with fixed dimensions
             const canvas = await html2canvas(printRef.current, {
-                scale: scale,
+                scale: 2,
                 useCORS: true,
                 allowTaint: true,
                 logging: false,
                 backgroundColor: '#ffffff',
-                // Don't set windowHeight/windowWidth - let html2canvas auto-detect
+                windowWidth: 794,
+                windowHeight: printRef.current.scrollHeight,
             });
 
             // Only proceed if canvas has actual content
@@ -202,31 +199,30 @@ const Ledger = () => {
                 throw new Error('Canvas capture failed - element may not be visible');
             }
 
-            const imgData = canvas.toDataURL("image/png", 0.95);
+            const imgData = canvas.toDataURL("image/jpeg", 0.9);
 
             const pdf = new jsPDF("p", "mm", "a4");
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
+            const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
             const margin = 5;
-            const imgWidth = pdfWidth - (2 * margin);
-            
-            // Calculate image height maintaining aspect ratio
+
+            const imgWidth = pdfWidth - (2 * margin); // 200mm
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-            // Single page or multi-page handling
-            let heightLeft = imgHeight;
-            let position = 0;
+            // Add image to PDF (all at once)
+            pdf.addImage(imgData, "JPEG", margin, margin, imgWidth, imgHeight);
 
-            // Add first page
-            pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+            // If content is very tall, split across multiple pages
+            if (imgHeight > pdfHeight) {
+                let remainingHeight = imgHeight - pdfHeight;
+                let currentPosition = 0;
 
-            // Add additional pages if needed
-            heightLeft -= pdfHeight;
-            while (heightLeft >= 0) {
-                position = heightLeft - imgHeight;
-                pdf.addPage();
-                pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
-                heightLeft -= pdfHeight;
+                while (remainingHeight > 0) {
+                    pdf.addPage();
+                    currentPosition -= pdfHeight;
+                    pdf.addImage(imgData, "JPEG", margin, currentPosition, imgWidth, imgHeight);
+                    remainingHeight -= pdfHeight;
+                }
             }
 
             // Download PDF
