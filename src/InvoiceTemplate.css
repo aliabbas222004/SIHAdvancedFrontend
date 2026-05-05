@@ -4,8 +4,18 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #222;
   margin: 10px auto;
-  width: 800px;
+  width: 100%;
+  max-width: 800px;
   background: white;
+  box-sizing: border-box;
+  padding: 10px;
+}
+
+@media (max-width: 768px) {
+  .print-wrapper {
+    margin: 5px auto;
+    padding: 8px;
+  }
 }
 
 /* Invoice container */
@@ -16,6 +26,13 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 768px) {
+  .invoice-container {
+    padding: 8px 12px;
+    margin-bottom: 10px;
+  }
+}
+
 .invoice-header {
   display: flex;
   justify-content: space-between;
@@ -24,12 +41,33 @@
   padding-bottom: 10px;
 }
 
+@media (max-width: 768px) {
+  .invoice-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    padding-bottom: 8px;
+  }
+}
+
 .logo1 {
   height: 60px;
 }
 
+@media (max-width: 768px) {
+  .logo1 {
+    height: 40px;
+  }
+}
+
 .logo2 {
   height: 40px;
+}
+
+@media (max-width: 768px) {
+  .logo2 {
+    height: 25px;
+  }
 }
 
 .sImg{
@@ -47,9 +85,22 @@
   margin-top: 0px;
 }
 
+@media (max-width: 768px) {
+  .company-details h2 {
+    font-size: 18px;
+    margin-bottom: 3px;
+  }
+}
+
 .company-details p {
   font-size: 10px;
   margin-top: 0px;
+}
+
+@media (max-width: 768px) {
+  .company-details p {
+    font-size: 8px;
+  }
 }
 
 .qr-section {
@@ -63,6 +114,13 @@
 .qr {
   height: 80px;
   margin-bottom: 5px;
+}
+
+@media (max-width: 768px) {
+  .qr {
+    height: 50px;
+    margin-bottom: 3px;
+  }
 }
 
 .copy-label {
@@ -86,14 +144,34 @@
   line-height: 0.1;
 }
 
+@media (max-width: 768px) {
+  .info-grid {
+    font-size: 8px;
+    margin: 1px 0;
+  }
+}
+
 .bill{
   padding-top: 5px;
   font-size: 12px;
 }
 
+@media (max-width: 768px) {
+  .bill {
+    padding-top: 3px;
+    font-size: 10px;
+  }
+}
+
 .right{
   padding: 0px;
   margin-left:10px ;
+}
+
+@media (max-width: 768px) {
+  .right {
+    margin-left: 5px;
+  }
 }
 
 .left{
@@ -116,6 +194,14 @@
   /* padding: 8px; */
   text-align: center;
   font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .invoice-table th,
+  .invoice-table td {
+    font-size: 8px;
+    padding: 2px !important;
+  }
 }
 
 .text-right{

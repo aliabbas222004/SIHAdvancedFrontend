@@ -25,15 +25,23 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
     // Wait to ensure element is fully rendered
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Generate canvas with fixed dimensions (A4 width = 794px at 96dpi)
+    // Get actual element dimensions to avoid rendering issues on mobile
+    const elementWidth = element.offsetWidth || element.scrollWidth;
+    const elementHeight = element.scrollHeight || element.offsetHeight;
+    
+    // On mobile, use actual element width; on desktop use A4 width for consistency
+    const isMobile = window.innerWidth < 768;
+    const windowWidth = isMobile ? Math.max(elementWidth, 375) : 794;
+
+    // Generate canvas with adaptive dimensions
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: 794,
-      windowHeight: element.scrollHeight,
+      windowWidth: windowWidth,
+      windowHeight: elementHeight,
     });
 
     // Only proceed if canvas has actual content
@@ -68,6 +76,12 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
 
     // Create blob and download (works on both desktop and mobile)
     const pdfBlob = pdf.output('blob');
+    
+    // Verify PDF blob is not empty
+    if (!pdfBlob || pdfBlob.size === 0) {
+      throw new Error('PDF generation resulted in empty file');
+    }
+
     const url = URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
     link.href = url;
@@ -76,8 +90,8 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
     link.click();
     document.body.removeChild(link);
     
-    // Cleanup
-    setTimeout(() => URL.revokeObjectURL(url), 100);
+    // Cleanup after download has time to start
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw new Error(`Error generating PDF: ${error.message}`);
