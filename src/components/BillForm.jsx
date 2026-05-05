@@ -351,11 +351,11 @@ export default function BillForm({ items, resetItems }) {
           position: 'fixed',
           left: '-9999px',
           top: '-9999px',
-          width: '794px',
+          width: '800px',
           height: 'auto',
           zIndex: '-1'
         }}>
-          <div ref={invoiceRef} id="original-invoice">
+          <div ref={invoiceRef} id="original-invoice" className="print-wrapper">
             <InvoiceTemplate {...generatedBillData} />
           </div>
         </div>

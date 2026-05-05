@@ -227,7 +227,7 @@ const Ledger = () => {
 
             {ledgerEntries.length > 0 && (
                 <>
-                    <div ref={printRef}>
+                    <div ref={printRef} className="print-wrapper">
                         <div style={{ textAlign: "center", marginBottom: "10px" }}>
                             <img src="transparentlogo1.png" alt="logo" style={{ width: "70px" }} />
                             <img src="transparentlogo2.png" alt="logo" style={{ width: "170px" }} />

@@ -232,37 +232,30 @@
   width: 800px !important;
   max-width: 800px !important;
   margin: 10px auto !important;
+  padding: 10px !important;
 }
 
 .pdf-render-mode .invoice-container {
   padding: 10px 20px !important;
   margin-bottom: 20px !important;
-  transform: scale(1) !important;
 }
 
-.pdf-render-mode .logo1 {
-  height: 60px !important;
+.pdf-render-mode {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-.pdf-render-mode .logo2 {
-  height: 40px !important;
-}
-
-.pdf-render-mode .company-details h2 {
-  font-size: 25px !important;
-}
-
-.pdf-render-mode .company-details p {
-  font-size: 10px !important;
+.pdf-render-mode img {
+  display: inline-block !important;
+  visibility: visible !important;
 }
 
 .pdf-render-mode .invoice-table th,
 .pdf-render-mode .invoice-table td {
+  border: 1px solid #888 !important;
+  text-align: center !important;
   font-size: 10px !important;
-}
-
-.pdf-render-mode .qr {
-  height: 80px !important;
 }
 
 .terms ul {

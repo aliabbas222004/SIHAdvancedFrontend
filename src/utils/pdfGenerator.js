@@ -28,8 +28,26 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
     // Wait to ensure element is fully rendered
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // ALWAYS use A4 width (794px) for PDF generation regardless of device
-    // This ensures consistent PDF layout on both desktop and mobile
+    // Wait for all images to load properly
+    const images = element.querySelectorAll('img');
+    const imageLoadPromises = Array.from(images).map(img => {
+      return new Promise((resolve) => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        }
+      });
+    });
+    await Promise.all(imageLoadPromises);
+    
+    // Additional wait to ensure all content is rendered
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Use A4 width (794px @ 96dpi) for PDF generation
+    // This ensures consistent A4 page layout regardless of device
+    // The print-wrapper class ensures proper width constraint
     const A4_WIDTH = 794;
     const elementHeight = element.scrollHeight || element.offsetHeight;
 
