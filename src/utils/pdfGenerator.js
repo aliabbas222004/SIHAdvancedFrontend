@@ -22,25 +22,25 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
       throw new Error('Element not found');
     }
 
+    // Force desktop layout by adding pdf-render-mode class
+    element.classList.add('pdf-render-mode');
+
     // Wait to ensure element is fully rendered
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Get actual element dimensions to avoid rendering issues on mobile
-    const elementWidth = element.offsetWidth || element.scrollWidth;
+    // ALWAYS use A4 width (794px) for PDF generation regardless of device
+    // This ensures consistent PDF layout on both desktop and mobile
+    const A4_WIDTH = 794;
     const elementHeight = element.scrollHeight || element.offsetHeight;
-    
-    // On mobile, use actual element width; on desktop use A4 width for consistency
-    const isMobile = window.innerWidth < 768;
-    const windowWidth = isMobile ? Math.max(elementWidth, 375) : 794;
 
-    // Generate canvas with adaptive dimensions
+    // Generate canvas with fixed A4 dimensions
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: windowWidth,
+      windowWidth: A4_WIDTH,
       windowHeight: elementHeight,
     });
 
@@ -92,7 +92,12 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
     
     // Cleanup after download has time to start
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    
+    // Remove pdf-render-mode class
+    element.classList.remove('pdf-render-mode');
   } catch (error) {
+    // Remove pdf-render-mode class on error
+    element.classList.remove('pdf-render-mode');
     console.error('Error generating PDF:', error);
     throw new Error(`Error generating PDF: ${error.message}`);
   }

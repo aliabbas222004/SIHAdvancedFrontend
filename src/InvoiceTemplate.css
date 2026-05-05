@@ -11,10 +11,13 @@
   padding: 10px;
 }
 
-@media (max-width: 768px) {
+/* Force desktop layout for PDF generation - no responsive scaling */
+@media print {
   .print-wrapper {
-    margin: 5px auto;
-    padding: 8px;
+    width: 800px;
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 10px;
   }
 }
 
@@ -26,10 +29,10 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 768px) {
+@media print {
   .invoice-container {
-    padding: 8px 12px;
-    margin-bottom: 10px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
   }
 }
 
@@ -41,12 +44,11 @@
   padding-bottom: 10px;
 }
 
-@media (max-width: 768px) {
+@media print {
   .invoice-header {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    padding-bottom: 8px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    padding-bottom: 10px;
   }
 }
 
@@ -54,19 +56,16 @@
   height: 60px;
 }
 
-@media (max-width: 768px) {
-  .logo1 {
-    height: 40px;
-  }
-}
-
 .logo2 {
   height: 40px;
 }
 
-@media (max-width: 768px) {
+@media print {
+  .logo1 {
+    height: 60px;
+  }
   .logo2 {
-    height: 25px;
+    height: 40px;
   }
 }
 
@@ -85,21 +84,18 @@
   margin-top: 0px;
 }
 
-@media (max-width: 768px) {
-  .company-details h2 {
-    font-size: 18px;
-    margin-bottom: 3px;
-  }
-}
-
 .company-details p {
   font-size: 10px;
   margin-top: 0px;
 }
 
-@media (max-width: 768px) {
+@media print {
+  .company-details h2 {
+    font-size: 25px;
+    margin-bottom: 5px;
+  }
   .company-details p {
-    font-size: 8px;
+    font-size: 10px;
   }
 }
 
@@ -116,10 +112,10 @@
   margin-bottom: 5px;
 }
 
-@media (max-width: 768px) {
+@media print {
   .qr {
-    height: 50px;
-    margin-bottom: 3px;
+    height: 80px;
+    margin-bottom: 5px;
   }
 }
 
@@ -144,10 +140,10 @@
   line-height: 0.1;
 }
 
-@media (max-width: 768px) {
+@media print {
   .info-grid {
-    font-size: 8px;
-    margin: 1px 0;
+    font-size: 9px;
+    margin: 2px 0;
   }
 }
 
@@ -156,26 +152,23 @@
   font-size: 12px;
 }
 
-@media (max-width: 768px) {
-  .bill {
-    padding-top: 3px;
-    font-size: 10px;
-  }
-}
-
 .right{
   padding: 0px;
   margin-left:10px ;
 }
 
-@media (max-width: 768px) {
-  .right {
-    margin-left: 5px;
-  }
-}
-
 .left{
   padding: 0px;
+}
+
+@media print {
+  .bill {
+    padding-top: 5px;
+    font-size: 12px;
+  }
+  .right {
+    margin-left: 10px;
+  }
 }
 
 
@@ -196,11 +189,10 @@
   font-size: 10px;
 }
 
-@media (max-width: 768px) {
+@media print {
   .invoice-table th,
   .invoice-table td {
-    font-size: 8px;
-    padding: 2px !important;
+    font-size: 10px;
   }
 }
 
@@ -233,6 +225,44 @@
   font-size: 9px;
   color: #555;
   margin-top: 15px;
+}
+
+/* Force desktop layout for PDF rendering on all devices */
+.pdf-render-mode .print-wrapper {
+  width: 800px !important;
+  max-width: 800px !important;
+  margin: 10px auto !important;
+}
+
+.pdf-render-mode .invoice-container {
+  padding: 10px 20px !important;
+  margin-bottom: 20px !important;
+  transform: scale(1) !important;
+}
+
+.pdf-render-mode .logo1 {
+  height: 60px !important;
+}
+
+.pdf-render-mode .logo2 {
+  height: 40px !important;
+}
+
+.pdf-render-mode .company-details h2 {
+  font-size: 25px !important;
+}
+
+.pdf-render-mode .company-details p {
+  font-size: 10px !important;
+}
+
+.pdf-render-mode .invoice-table th,
+.pdf-render-mode .invoice-table td {
+  font-size: 10px !important;
+}
+
+.pdf-render-mode .qr {
+  height: 80px !important;
 }
 
 .terms ul {

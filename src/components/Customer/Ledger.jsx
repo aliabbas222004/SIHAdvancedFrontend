@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { generateAndDownloadPDF } from "../../utils/pdfGenerator";
 import "./Ledger.css";
 
 const Ledger = () => {
@@ -180,63 +181,7 @@ const Ledger = () => {
 
     const handleDownloadPDF = async () => {
         try {
-            // Wait a bit to ensure all content is rendered
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            // Generate canvas with fixed dimensions
-            const canvas = await html2canvas(printRef.current, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                windowWidth: 794,
-                windowHeight: printRef.current.scrollHeight,
-            });
-
-            // Only proceed if canvas has actual content
-            if (canvas.width === 0 || canvas.height === 0) {
-                throw new Error('Canvas capture failed - element may not be visible');
-            }
-
-            const imgData = canvas.toDataURL("image/jpeg", 0.9);
-
-            const pdf = new jsPDF("p", "mm", "a4");
-            const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
-            const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
-            const margin = 5;
-
-            const imgWidth = pdfWidth - (2 * margin); // 200mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            // Add image to PDF (all at once)
-            pdf.addImage(imgData, "JPEG", margin, margin, imgWidth, imgHeight);
-
-            // If content is very tall, split across multiple pages
-            if (imgHeight > pdfHeight) {
-                let remainingHeight = imgHeight - pdfHeight;
-                let currentPosition = 0;
-
-                while (remainingHeight > 0) {
-                    pdf.addPage();
-                    currentPosition -= pdfHeight;
-                    pdf.addImage(imgData, "JPEG", margin, currentPosition, imgWidth, imgHeight);
-                    remainingHeight -= pdfHeight;
-                }
-            }
-
-            // Download PDF
-            const pdfBlob = pdf.output('blob');
-            const url = URL.createObjectURL(pdfBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Ledger_${selectedCustomer?.name}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Cleanup
-            setTimeout(() => URL.revokeObjectURL(url), 100);
+            await generateAndDownloadPDF(printRef.current, `Ledger_${selectedCustomer?.name}`);
         } catch (error) {
             console.error("Error generating PDF:", error);
             alert(`Error generating PDF: ${error.message}`);

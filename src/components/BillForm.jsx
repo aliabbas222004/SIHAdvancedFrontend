@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import InvoiceTemplate from './InvoiceTemplate';
+import { generateAndDownloadPDF } from '../utils/pdfGenerator';
 
 export default function BillForm({ items, resetItems }) {
   const [customers, setCustomers] = useState([]);
@@ -126,71 +127,16 @@ export default function BillForm({ items, resetItems }) {
     }, 500);
   };
 
-  // 🔹 Download invoice as PDF (mobile-friendly)
+  // 🔹 Download invoice as PDF (uses optimized utility function)
   const handleDownloadInvoicePDF = async () => {
     try {
       const invoiceElement = document.getElementById('original-invoice');
-      if (!invoiceElement) return alert('Invoice not found');
-
-      // Wait a bit to ensure all content is rendered
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capture element as canvas with fixed dimensions
-      const canvas = await html2canvas(invoiceElement, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-        windowWidth: 794,
-        windowHeight: invoiceElement.scrollHeight,
-      });
-
-      // Only proceed if canvas has actual content
-      if (canvas.width === 0 || canvas.height === 0) {
-        throw new Error('Canvas capture failed - element may not be visible');
+      if (!invoiceElement) {
+        alert('Invoice not found');
+        return;
       }
-
-      // Convert canvas to image
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
-
-      // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210mm
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297mm
-      const margin = 5;
-
-      const imgWidth = pdfWidth - (2 * margin); // 200mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Add image to PDF (all at once)
-      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
-
-      // If content is very tall, split across multiple pages
-      if (imgHeight > pdfHeight) {
-        let remainingHeight = imgHeight - pdfHeight;
-        let currentPosition = 0;
-
-        while (remainingHeight > 0) {
-          pdf.addPage();
-          currentPosition -= pdfHeight;
-          pdf.addImage(imgData, 'JPEG', margin, currentPosition, imgWidth, imgHeight);
-          remainingHeight -= pdfHeight;
-        }
-      }
-
-      // Download PDF
-      const pdfBlob = pdf.output('blob');
-      const url = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Bill_${generatedBillData?.billId || 'Invoice'}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // Cleanup
-      setTimeout(() => URL.revokeObjectURL(url), 100);
+      
+      await generateAndDownloadPDF(invoiceElement, `Bill_${generatedBillData?.billId || 'Invoice'}`);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert(`Error generating PDF: ${error.message}`);
