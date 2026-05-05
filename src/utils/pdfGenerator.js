@@ -22,52 +22,36 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
       throw new Error('Element not found');
     }
 
-    // Force desktop layout by adding pdf-render-mode class
-    element.classList.add('pdf-render-mode');
+    // Wait for everything to render
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Wait to ensure element is fully rendered
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Wait for all images to load properly
-    const images = element.querySelectorAll('img');
-    const imageLoadPromises = Array.from(images).map(img => {
-      return new Promise((resolve) => {
-        if (img.complete) {
-          resolve();
-        } else {
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-        }
-      });
-    });
-    await Promise.all(imageLoadPromises);
-    
-    // Additional wait to ensure all content is rendered
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Use A4 width (794px @ 96dpi) for PDF generation
-    // This ensures consistent A4 page layout regardless of device
-    // The print-wrapper class ensures proper width constraint
-    const A4_WIDTH = 794;
+    // Get the element's actual rendered width
+    const elementWidth = element.offsetWidth || element.scrollWidth || 800;
     const elementHeight = element.scrollHeight || element.offsetHeight;
 
-    // Generate canvas with fixed A4 dimensions
+    console.log('Capturing PDF:', { elementWidth, elementHeight });
+
+    // Generate canvas - use element's actual width
     const canvas = await html2canvas(element, {
       scale: 2,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: A4_WIDTH,
+      windowWidth: elementWidth,
       windowHeight: elementHeight,
+      proxy: null,
+      imageTimeout: 0,
     });
+
+    console.log('Canvas generated:', { width: canvas.width, height: canvas.height });
 
     // Only proceed if canvas has actual content
     if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error('Canvas capture failed - element may not be visible');
+      throw new Error('Canvas capture failed - element may not be visible or has no dimensions');
     }
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.9);
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
     const pdf = new jsPDF(orientation, 'mm', 'a4');
     const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
@@ -76,48 +60,53 @@ export const generateAndDownloadPDF = async (element, fileName, options = {}) =>
     const imgWidth = pageWidth - (2 * margin); // 200mm
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Add image to PDF (all at once)
+    // Add first page
     pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
 
-    // If content is very tall, split across multiple pages
+    // If content spans multiple pages, add them
     if (imgHeight > pageHeight) {
       let remainingHeight = imgHeight - pageHeight;
-      let currentPosition = 0;
+      let currentPosition = -pageHeight + margin;
 
       while (remainingHeight > 0) {
         pdf.addPage();
-        currentPosition -= pageHeight;
         pdf.addImage(imgData, 'JPEG', margin, currentPosition, imgWidth, imgHeight);
         remainingHeight -= pageHeight;
+        currentPosition -= pageHeight;
       }
     }
 
-    // Create blob and download (works on both desktop and mobile)
+    // Generate and download
     const pdfBlob = pdf.output('blob');
-    
-    // Verify PDF blob is not empty
+
+    console.log('PDF blob size:', pdfBlob.size);
+
     if (!pdfBlob || pdfBlob.size === 0) {
       throw new Error('PDF generation resulted in empty file');
     }
 
+    // Use native download for better mobile compatibility
     const url = URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `${fileName}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
     
-    // Cleanup after download has time to start
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    
-    // Remove pdf-render-mode class
-    element.classList.remove('pdf-render-mode');
+    // Trigger download
+    if (navigator.msSaveBlob) {
+      // For IE and Edge
+      navigator.msSaveBlob(pdfBlob, `${fileName}.pdf`);
+    } else {
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Cleanup
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
   } catch (error) {
-    // Remove pdf-render-mode class on error
-    element.classList.remove('pdf-render-mode');
     console.error('Error generating PDF:', error);
-    throw new Error(`Error generating PDF: ${error.message}`);
+    throw new Error(`PDF Error: ${error.message}`);
   }
 };
 
