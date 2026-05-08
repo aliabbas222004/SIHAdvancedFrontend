@@ -7,3 +7,12 @@
     background-color: #ffe5cc14 !important; /* light orange */
     color: #000;
 }
+
+
+table th,
+table td {
+    padding: 4px 8px !important;
+    line-height: 1.1 !important;
+    vertical-align: middle;
+    font-size: 13px;
+}

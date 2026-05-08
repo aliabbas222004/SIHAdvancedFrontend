@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import "./Ledger.css";
 
 const Ledger = () => {
@@ -176,8 +178,16 @@ const Ledger = () => {
     const outstandingType =
         totals.debit > totals.credit ? "Debit" : "Credit";
 
-    const handlePrintLedger = () => {
-        window.print();
+    const handleDownloadPDF = async () => {
+        const canvas = await html2canvas(printRef.current, { scale: 2 });
+        const imgData = canvas.toDataURL("image/png");
+
+        const pdf = new jsPDF("p", "mm", "a4");
+        const width = pdf.internal.pageSize.getWidth();
+        const height = (canvas.height * width) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 10, 10, width - 20, height);
+        pdf.save(`Ledger_${selectedCustomer?.name}.pdf`);
     };
 
     return (
@@ -197,19 +207,41 @@ const Ledger = () => {
                     </select>
 
                     {/* ✅ DATE INPUTS */}
-                    <input
-                        type="date"
-                        className="form-control mb-2"
-                        value={fromDate}
-                        onChange={(e) => setFromDate(e.target.value)}
-                    />
+                    {/* STARTING DATE */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold">
+                            Starting Date
+                        </label>
 
-                    <input
-                        type="date"
-                        className="form-control mb-3"
-                        value={toDate}
-                        onChange={(e) => setToDate(e.target.value)}
-                    />
+                        <input
+                            type="date"
+                            className="form-control"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                        />
+
+                        <small className="text-muted">
+                            Leave empty to include all transactions till the selected To Date.
+                        </small>
+                    </div>
+
+                    {/* ENDING DATE */}
+                    <div className="mb-3">
+                        <label className="form-label fw-semibold">
+                            Ending Date
+                        </label>
+
+                        <input
+                            type="date"
+                            className="form-control"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                        />
+
+                        <small className="text-muted">
+                            Leave empty to include all transactions till today.
+                        </small>
+                    </div>
 
                     <button className="btn btn-primary" onClick={handleSubmit}>
                         Show Ledger
@@ -219,7 +251,7 @@ const Ledger = () => {
 
             {ledgerEntries.length > 0 && (
                 <>
-                    <div ref={printRef} className="print-wrapper">
+                    <div ref={printRef}>
                         <div style={{ textAlign: "center", marginBottom: "10px" }}>
                             <img src="transparentlogo1.png" alt="logo" style={{ width: "70px" }} />
                             <img src="transparentlogo2.png" alt="logo" style={{ width: "170px" }} />
@@ -282,8 +314,8 @@ const Ledger = () => {
                     </div>
 
                     <div className="text-center mb-3">
-                        <button className="btn btn-success" onClick={handlePrintLedger}>
-                            🖨️ Print / Save as PDF
+                        <button className="btn btn-success" onClick={handleDownloadPDF}>
+                            Download PDF
                         </button>
                     </div>
                 </>

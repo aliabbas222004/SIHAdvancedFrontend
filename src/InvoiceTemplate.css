@@ -4,21 +4,8 @@
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #222;
   margin: 10px auto;
-  width: 100%;
-  max-width: 800px;
+  width: 800px;
   background: white;
-  box-sizing: border-box;
-  padding: 10px;
-}
-
-/* Force desktop layout for PDF generation - no responsive scaling */
-@media print {
-  .print-wrapper {
-    width: 800px;
-    max-width: 100%;
-    margin: 10px auto;
-    padding: 10px;
-  }
 }
 
 /* Invoice container */
@@ -29,13 +16,6 @@
   box-sizing: border-box;
 }
 
-@media print {
-  .invoice-container {
-    padding: 10px 20px;
-    margin-bottom: 20px;
-  }
-}
-
 .invoice-header {
   display: flex;
   justify-content: space-between;
@@ -44,29 +24,12 @@
   padding-bottom: 10px;
 }
 
-@media print {
-  .invoice-header {
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    padding-bottom: 10px;
-  }
-}
-
 .logo1 {
   height: 60px;
 }
 
 .logo2 {
   height: 40px;
-}
-
-@media print {
-  .logo1 {
-    height: 60px;
-  }
-  .logo2 {
-    height: 40px;
-  }
 }
 
 .sImg{
@@ -89,16 +52,6 @@
   margin-top: 0px;
 }
 
-@media print {
-  .company-details h2 {
-    font-size: 25px;
-    margin-bottom: 5px;
-  }
-  .company-details p {
-    font-size: 10px;
-  }
-}
-
 .qr-section {
   text-align: center;
 }
@@ -110,13 +63,6 @@
 .qr {
   height: 80px;
   margin-bottom: 5px;
-}
-
-@media print {
-  .qr {
-    height: 80px;
-    margin-bottom: 5px;
-  }
 }
 
 .copy-label {
@@ -140,13 +86,6 @@
   line-height: 0.1;
 }
 
-@media print {
-  .info-grid {
-    font-size: 9px;
-    margin: 2px 0;
-  }
-}
-
 .bill{
   padding-top: 5px;
   font-size: 12px;
@@ -159,16 +98,6 @@
 
 .left{
   padding: 0px;
-}
-
-@media print {
-  .bill {
-    padding-top: 5px;
-    font-size: 12px;
-  }
-  .right {
-    margin-left: 10px;
-  }
 }
 
 
@@ -187,13 +116,6 @@
   /* padding: 8px; */
   text-align: center;
   font-size: 10px;
-}
-
-@media print {
-  .invoice-table th,
-  .invoice-table td {
-    font-size: 10px;
-  }
 }
 
 .text-right{
