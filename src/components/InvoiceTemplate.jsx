@@ -20,7 +20,8 @@ const InvoiceTemplate = ({
   tableData,
   totalQuantity,
   totalPrice,
-  paymentMode
+  paymentMode,
+  freightCharge_packaging
 }) => {
   const numberToWords = (num) => {
     const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -42,7 +43,7 @@ const InvoiceTemplate = ({
     return `${rupees} Rupees${paise} Only`;
   };
 
-  const MIN_ROWS = 15;
+  const MIN_ROWS = 14;
   const emptyRowsCount = Math.max(0, MIN_ROWS - tableData.length);
   const gstAmount = (totalPrice * 18) / 100;
   const grandTotal = totalPrice;
@@ -213,6 +214,14 @@ const InvoiceTemplate = ({
             <td></td>
             <td></td>
             <td><strong>{((totalPrice / 1.18 * 0.09).toFixed(2))} ₹</strong></td>
+          </tr>
+          <tr className='gst'>
+            <td colSpan="3" className='text-right'>Freight Charge/ Packaging Charge</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td><strong>{freightCharge_packaging} ₹</strong></td>
           </tr>
           <tr>
             <td colSpan="3" className='text-right'>Total</td>

@@ -25,9 +25,10 @@ export default function BillForm({ items, resetItems }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [generatedBillData, setGeneratedBillData] = useState(null);
+  const [freightCharge_packaging, setFreightCharge_Packaging] = useState(0);
   const invoiceRef = useRef();
 
-  const totalAmount = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0);
+  const totalAmount = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0) + freightCharge_packaging;
 
   const paymentModes = [
     { _id: "CASH", name: "Cash" },
@@ -135,7 +136,7 @@ export default function BillForm({ items, resetItems }) {
         alert('Invoice not found');
         return;
       }
-      
+
       await generateAndDownloadPDF(invoiceElement, `Bill_${generatedBillData?.billId || 'Invoice'}`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -183,7 +184,8 @@ export default function BillForm({ items, resetItems }) {
       })),
       totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       totalPrice: totalAmount,
-      paymentMode: paymentMode
+      paymentMode: paymentMode,
+      freightCharge_packaging: freightCharge_packaging
     };
 
 
@@ -305,16 +307,27 @@ export default function BillForm({ items, resetItems }) {
         </div>
       </div>
 
-      <div className="mb-3">
-        <label className="form-label">Select Payment Mode</label>
-        <select className="form-select" onChange={(e) => setPaymentMode(e.target.value)}>
-          <option value="">-- Select Payment Mode --</option>
-          {paymentModes.map(mode => (
-            <option key={mode._id} value={mode._id}>
-              {mode.name}
-            </option>
-          ))}
-        </select>
+      <div className="row">
+        <div className="col-12 col-md-6">
+          <div className="mb-3">
+            <label className="form-label">Select Payment Mode</label>
+            <select className="form-select" onChange={(e) => setPaymentMode(e.target.value)}>
+              <option value="">-- Select Payment Mode --</option>
+              {paymentModes.map(mode => (
+                <option key={mode._id} value={mode._id}>
+                  {mode.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-6">
+          <div className="mb-3">
+            <label className="form-label">Freight Charge/ Packaging Charge</label>
+            <input type="number" className="form-control" value={freightCharge_packaging} onChange={(e) => setFreightCharge_Packaging(Number(e.target.value) || 0)} />
+          </div>
+        </div>
       </div>
 
       {/* Total */}
@@ -347,7 +360,7 @@ export default function BillForm({ items, resetItems }) {
 
       {/* Hidden Template */}
       {generatedBillData && (
-        <div style={{ 
+        <div style={{
           position: 'fixed',
           left: '-9999px',
           top: '-9999px',

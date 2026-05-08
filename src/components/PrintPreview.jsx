@@ -1,6 +1,7 @@
 // PrintPreviewPage.js
 import React from 'react';
 import InvoiceTemplate from './InvoiceTemplate';
+import { faRegistered } from '@fortawesome/free-solid-svg-icons';
 
 const sampleBillData = {
   billId: "BILL-12345",
@@ -18,8 +19,9 @@ const sampleBillData = {
     { itemId: "ITM002",HSN:"48239020", itemName: "Table", selectedQuantity: 1, unitPrice: 1500 },
   ],
   totalQuantity: 3,
-  totalPrice: 2500,
-  paymentMode: "cash"
+  totalPrice: 2600,
+  paymentMode: "cash",
+  freightCharge_packaging: 100
 };
 
 export default function PrintPreviewPage() {
