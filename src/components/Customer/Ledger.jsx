@@ -1,7 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
-import { generateAndDownloadPDF } from "../../utils/pdfGenerator";
 import "./Ledger.css";
 
 const Ledger = () => {
@@ -179,13 +176,8 @@ const Ledger = () => {
     const outstandingType =
         totals.debit > totals.credit ? "Debit" : "Credit";
 
-    const handleDownloadPDF = async () => {
-        try {
-            await generateAndDownloadPDF(printRef.current, `Ledger_${selectedCustomer?.name}`);
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            alert(`Error generating PDF: ${error.message}`);
-        }
+    const handlePrintLedger = () => {
+        window.print();
     };
 
     return (
@@ -290,8 +282,8 @@ const Ledger = () => {
                     </div>
 
                     <div className="text-center mb-3">
-                        <button className="btn btn-success" onClick={handleDownloadPDF}>
-                            Download PDF
+                        <button className="btn btn-success" onClick={handlePrintLedger}>
+                            🖨️ Print / Save as PDF
                         </button>
                     </div>
                 </>

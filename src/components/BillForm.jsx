@@ -1,8 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import InvoiceTemplate from './InvoiceTemplate';
-import { generateAndDownloadPDF } from '../utils/pdfGenerator';
 
 export default function BillForm({ items, resetItems }) {
   const [customers, setCustomers] = useState([]);
@@ -128,21 +125,7 @@ export default function BillForm({ items, resetItems }) {
     }, 500);
   };
 
-  // 🔹 Download invoice as PDF (uses optimized utility function)
-  const handleDownloadInvoicePDF = async () => {
-    try {
-      const invoiceElement = document.getElementById('original-invoice');
-      if (!invoiceElement) {
-        alert('Invoice not found');
-        return;
-      }
 
-      await generateAndDownloadPDF(invoiceElement, `Bill_${generatedBillData?.billId || 'Invoice'}`);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert(`Error generating PDF: ${error.message}`);
-    }
-  };
 
   // 🔹 Generate Bill
   const generateBill = async () => {
@@ -349,24 +332,13 @@ export default function BillForm({ items, resetItems }) {
         </button>
       </div>
 
-      {/* Download PDF Button - Shows after bill generated */}
-      {generatedBillData && (
-        <div className="text-center mt-3">
-          <button onClick={handleDownloadInvoicePDF} className="btn btn-success px-5 ms-2">
-            📥 Download as PDF
-          </button>
-        </div>
-      )}
 
-      {/* Hidden Template */}
+
+      {/* Template - Hidden but visible during print */}
       {generatedBillData && (
         <div style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: '-9999px',
-          width: '800px',
-          height: 'auto',
-          zIndex: '-1'
+          display: 'none',
+          width: '800px'
         }}>
           <div ref={invoiceRef} id="original-invoice" className="print-wrapper">
             <InvoiceTemplate {...generatedBillData} />

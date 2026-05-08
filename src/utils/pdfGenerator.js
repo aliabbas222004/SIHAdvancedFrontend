@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 
 /**
  * Generates and downloads a PDF from an HTML element
- * Mobile-optimized to work on both desktop and mobile devices
+ * Mobile-optimized - creates temporary visible container for proper capture
  * @param {HTMLElement} element - The HTML element to convert to PDF
  * @param {string} fileName - The name of the file to download (without .pdf extension)
  * @param {Object} options - Additional options
@@ -12,101 +12,145 @@ import html2canvas from 'html2canvas';
  * @returns {Promise<void>}
  */
 export const generateAndDownloadPDF = async (element, fileName, options = {}) => {
+  const {
+    orientation = 'p',
+    margin = 5,
+  } = options;
+
+  if (!element) {
+    throw new Error('Element not found');
+  }
+
+  let tempContainer = null;
+
   try {
-    const {
-      orientation = 'p',
-      margin = 5,
-    } = options;
+    // Create temporary container in viewport for proper rendering
+    tempContainer = document.createElement('div');
+    tempContainer.id = 'temp-pdf-capture-' + Date.now();
+    tempContainer.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: white;
+      z-index: 99999;
+      overflow: hidden;
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+      padding: 0;
+      margin: 0;
+    `;
 
-    if (!element) {
-      throw new Error('Element not found');
-    }
+    // Clone the element
+    const clonedElement = element.cloneNode(true);
+    clonedElement.style.cssText = `
+      width: 800px !important;
+      height: auto !important;
+      max-width: 800px !important;
+      margin: 0 !important;
+      padding: 20px !important;
+      background: white !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+    `;
 
-    // Wait for everything to render
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    tempContainer.appendChild(clonedElement);
+    document.body.appendChild(tempContainer);
 
-    // Get the element's actual rendered width
-    const elementWidth = element.offsetWidth || element.scrollWidth || 800;
-    const elementHeight = element.scrollHeight || element.offsetHeight;
+    // Force layout
+    void clonedElement.offsetHeight;
+    
+    // Wait for rendering
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
-    console.log('Capturing PDF:', { elementWidth, elementHeight });
-
-    // Generate canvas - use element's actual width
-    const canvas = await html2canvas(element, {
-      scale: 2,
+    // Capture
+    const canvas = await html2canvas(clonedElement, {
+      scale: 1.5,
       useCORS: true,
       allowTaint: true,
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: elementWidth,
-      windowHeight: elementHeight,
-      proxy: null,
       imageTimeout: 0,
+      proxy: null,
     });
 
-    console.log('Canvas generated:', { width: canvas.width, height: canvas.height });
-
-    // Only proceed if canvas has actual content
-    if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error('Canvas capture failed - element may not be visible or has no dimensions');
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+      throw new Error('Canvas capture failed');
     }
 
+    // Convert to image
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    
+    if (!imgData || imgData.length < 100) {
+      throw new Error('Image data failed');
+    }
 
+    // Create PDF
     const pdf = new jsPDF(orientation, 'mm', 'a4');
-    const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-    const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-    const imgWidth = pageWidth - (2 * margin); // 200mm
+    const imgWidth = pageWidth - (2 * margin);
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    // Add first page
+    // Add image to PDF
     pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
 
-    // If content spans multiple pages, add them
+    // Handle multi-page
     if (imgHeight > pageHeight) {
+      let currentY = margin - pageHeight;
       let remainingHeight = imgHeight - pageHeight;
-      let currentPosition = -pageHeight + margin;
 
       while (remainingHeight > 0) {
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', margin, currentPosition, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', margin, currentY, imgWidth, imgHeight);
+        currentY -= pageHeight;
         remainingHeight -= pageHeight;
-        currentPosition -= pageHeight;
       }
     }
 
-    // Generate and download
+    // Generate PDF
     const pdfBlob = pdf.output('blob');
-
-    console.log('PDF blob size:', pdfBlob.size);
-
+    
     if (!pdfBlob || pdfBlob.size === 0) {
-      throw new Error('PDF generation resulted in empty file');
+      throw new Error('PDF generation failed');
     }
 
-    // Use native download for better mobile compatibility
+    // Download
     const url = URL.createObjectURL(pdfBlob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `${fileName}.pdf`;
-    
-    // Trigger download
+
     if (navigator.msSaveBlob) {
-      // For IE and Edge
       navigator.msSaveBlob(pdfBlob, `${fileName}.pdf`);
+      URL.revokeObjectURL(url);
+    } else if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
     } else {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     }
 
-    // Cleanup
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    throw new Error(`PDF Error: ${error.message}`);
+    console.error('PDF error:', error);
+    throw new Error(`Error: ${error.message}`);
+  } finally {
+    if (tempContainer && tempContainer.parentNode) {
+      try {
+        document.body.removeChild(tempContainer);
+      } catch (e) {
+        console.warn('Cleanup error:', e);
+      }
+    }
   }
 };
 
