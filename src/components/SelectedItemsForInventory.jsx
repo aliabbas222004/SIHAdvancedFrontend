@@ -50,7 +50,7 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
             </tr>
           </thead>
           <tbody>
-            {items.map(({ itemId, quantity, price, purchaseDate  }, i) => (
+            {items.map(({ itemId, quantity, price, purchaseDate }, i) => (
               <tr key={i}>
                 <td>{itemId}</td>
                 <td>
@@ -72,14 +72,10 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
                 <td>
                   <input
                     type="date"
-                    value={
-                      purchaseDate
-                        ? typeof purchaseDate === "string"
-                          ? purchaseDate.split("T")[0]
-                          : new Date(purchaseDate).toISOString().split("T")[0]
-                        : today
+                    value={purchaseDate || ""}
+                    onChange={(e) =>
+                      handleUpdate(i, "purchaseDate", e.target.value)
                     }
-                    onChange={(e) => handleUpdate(i, 'purchaseDate', e.target.value)}
                     className="form-control form-control-sm text-center"
                   />
 
