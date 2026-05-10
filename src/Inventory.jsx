@@ -19,7 +19,9 @@ const Inventory = () => {
           ...prev,
           {
             itemId: item.itemId,
+            latestPurchasePrice: item.latestPurchasePrice,
             quantity: 1,
+            totalPurchasePrice: item.latestPurchasePrice,
             purchaseDate: new Date().toISOString().split("T")[0], // default today's date
           }
         ];

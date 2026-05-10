@@ -1,21 +1,47 @@
 // src/components/SelectedItemsTable.jsx
-import React from 'react';
+import React from "react";
 
-export default function SelectedItemsForInventory({ items, onUpdate, onRemove }) {
+export default function SelectedItemsForInventory({
+  items,
+  onUpdate,
+  onRemove,
+}) {
   const handleUpdate = (index, field, value) => {
     const item = items[index];
     if (!item) return;
 
-    if (field === 'quantity') {
-      const qty = parseInt(value, 10);
-      if (isNaN(qty) || qty < 1) return;
-      onUpdate(item.itemId, 'quantity', qty);
-    } else if (field === 'price') {
-      const price = parseFloat(value);
-      if (isNaN(price) || price < 0) return;
-      onUpdate(item.itemId, 'price', price);
-    } else if (field === 'purchaseDate') {
-      onUpdate(item.itemId, 'purchaseDate', value);
+    const qty = item.quantity || 1;
+
+    if (field === "quantity") {
+      const newQty = parseInt(value, 10);
+      if (isNaN(newQty) || newQty < 1) return;
+
+      const unitPrice = item.unitPrice ?? item.latestPurchasePrice ?? 0;
+
+      onUpdate(item.itemId, "quantity", newQty);
+      onUpdate(item.itemId, "price", newQty * unitPrice);
+    }
+
+    else if (field === "unitPrice") {
+      const unitPrice = parseFloat(value);
+      if (isNaN(unitPrice) || unitPrice < 0) return;
+
+      onUpdate(item.itemId, "unitPrice", unitPrice);
+      onUpdate(item.itemId, "price", qty * unitPrice);
+    }
+
+    else if (field === "price") {
+      const total = parseFloat(value);
+      if (isNaN(total) || total < 0) return;
+
+      const newUnitPrice = qty ? total / qty : 0;
+
+      onUpdate(item.itemId, "price", total); // backend field
+      onUpdate(item.itemId, "unitPrice", newUnitPrice);
+    }
+
+    else if (field === "purchaseDate") {
+      onUpdate(item.itemId, "purchaseDate", value);
     }
   };
 
@@ -24,7 +50,6 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
     if (item) onRemove(item.itemId);
   };
 
-  // get today's date in YYYY-MM-DD format
   const today = new Date().toISOString().split("T")[0];
 
   if (items.length === 0) {
@@ -37,105 +62,197 @@ export default function SelectedItemsForInventory({ items, onUpdate, onRemove })
 
   return (
     <div className="container my-4">
-      {/* Table view for medium+ screens */}
+
+      {/* Desktop */}
       <div className="d-none d-md-block">
-        <table className="table table-bordered table-hover text-center align-middle shadow-sm">
-          <thead className="table-light">
-            <tr>
-              <th>Item Name</th>
-              <th>Purchase Quantity</th>
-              <th>Purchase Price (₹)</th>
-              <th>Purchase Date</th>
-              <th>Remove</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(({ itemId, quantity, price, purchaseDate }, i) => (
-              <tr key={i}>
-                <td>{itemId}</td>
-                <td>
+        <div className="table-responsive">
+          <table className="table table-bordered table-hover text-center align-middle shadow-sm">
+            <thead className="table-light">
+              <tr>
+                <th>Item Name</th>
+                <th>Previous Price</th>
+                <th>Quantity</th>
+                <th>Price / Unit (₹)</th>
+                <th>Total Price (₹)</th>
+                <th>Purchase Date</th>
+                <th>Remove</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {items.map(
+                (
+                  {
+                    itemId,
+                    quantity,
+                    price,
+                    purchaseDate,
+                    latestPurchasePrice,
+                    unitPrice,
+                  },
+                  i
+                ) => (
+                  <tr key={itemId}>
+                    <td>{itemId}</td>
+
+                    <td>
+                      ₹ {latestPurchasePrice?.toFixed(2)}
+                    </td>
+
+                    <td>
+                      <input
+                        type="number"
+                        min="1"
+                        value={quantity || ""}
+                        onChange={(e) =>
+                          handleUpdate(i, "quantity", e.target.value)
+                        }
+                        className="form-control form-control-sm text-center"
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={unitPrice ?? latestPurchasePrice ?? ""}
+                        onChange={(e) =>
+                          handleUpdate(i, "unitPrice", e.target.value)
+                        }
+                        className="form-control form-control-sm text-center"
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={price ?? latestPurchasePrice ?? ""}
+                        onChange={(e) =>
+                          handleUpdate(i, "price", e.target.value)
+                        }
+                        className="form-control form-control-sm text-center"
+                      />
+                    </td>
+
+                    <td>
+                      <input
+                        type="date"
+                        value={purchaseDate || today}
+                        onChange={(e) =>
+                          handleUpdate(i, "purchaseDate", e.target.value)
+                        }
+                        className="form-control form-control-sm text-center"
+                      />
+                    </td>
+
+                    <td>
+                      <button
+                        onClick={() => handleRemove(i)}
+                        className="btn btn-sm btn-outline-danger"
+                      >
+                        ✕
+                      </button>
+                    </td>
+                  </tr>
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Mobile */}
+      <div className="d-md-none">
+        {items.map(
+          (
+            {
+              itemId,
+              quantity,
+              price,
+              purchaseDate,
+              latestPurchasePrice,
+              unitPrice,
+            },
+            i
+          ) => (
+            <div key={itemId} className="card mb-3 shadow-sm">
+              <div className="card-body">
+                <h5>{itemId}</h5>
+
+                <h6>
+                  Previous Price: ₹ {latestPurchasePrice?.toFixed(2)}
+                </h6>
+
+                <div className="mb-2">
+                  <label>Quantity</label>
                   <input
                     type="number"
+                    min="1"
                     value={quantity || ""}
-                    onChange={(e) => handleUpdate(i, 'quantity', e.target.value)}
-                    className="form-control form-control-sm text-center"
+                    onChange={(e) =>
+                      handleUpdate(i, "quantity", e.target.value)
+                    }
+                    className="form-control"
                   />
-                </td>
-                <td>
+                </div>
+
+                <div className="mb-2">
+                  <label>Price Per Unit</label>
                   <input
                     type="number"
-                    value={price || ""}
-                    onChange={(e) => handleUpdate(i, 'price', e.target.value)}
-                    className="form-control form-control-sm text-center"
+                    min="0"
+                    step="0.01"
+                    value={unitPrice ?? latestPurchasePrice ?? ""}
+                    onChange={(e) =>
+                      handleUpdate(i, "unitPrice", e.target.value)
+                    }
+                    className="form-control"
                   />
-                </td>
-                <td>
+                </div>
+
+                <div className="mb-2">
+                  <label>Total Price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price || ""}
+                    onChange={(e) =>
+                      handleUpdate(i, "price", e.target.value)
+                    }
+                    className="form-control"
+                  />
+                </div>
+
+                <div className="mb-2">
+                  <label>Purchase Date</label>
                   <input
                     type="date"
-                    value={purchaseDate || ""}
+                    value={
+                      purchaseDate
+                        ? purchaseDate.split("T")[0]
+                        : today
+                    }
                     onChange={(e) =>
                       handleUpdate(i, "purchaseDate", e.target.value)
                     }
-                    className="form-control form-control-sm text-center"
+                    className="form-control"
                   />
+                </div>
 
-                </td>
-                <td>
-                  <button
-                    onClick={() => handleRemove(i)}
-                    className="btn btn-sm btn-outline-danger"
-                  >
-                    ✕
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Card view for small screens */}
-      <div className="d-md-none">
-        {items.map(({ itemId, quantity, price, date }, i) => (
-          <div key={i} className="card mb-3 shadow-sm">
-            <div className="card-body">
-              <h5 className="card-title">{itemId}</h5>
-              <div className="mb-2">
-                <label className="form-label small">Purchase Quantity</label>
-                <input
-                  type="number"
-                  value={quantity || ""}
-                  onChange={(e) => handleUpdate(i, 'quantity', e.target.value)}
-                  className="form-control form-control-sm"
-                />
+                <button
+                  onClick={() => handleRemove(i)}
+                  className="btn btn-sm btn-outline-danger"
+                >
+                  Remove
+                </button>
               </div>
-              <div className="mb-2">
-                <label className="form-label small">Purchase Price (₹)</label>
-                <input
-                  type="number"
-                  value={price || ""}
-                  onChange={(e) => handleUpdate(i, 'price', e.target.value)}
-                  className="form-control form-control-sm"
-                />
-              </div>
-              <div className="mb-2">
-                <label className="form-label small">Purchase Date</label>
-                <input
-                  type="date"
-                  value={date ? date.split('T')[0] : today}
-                  onChange={(e) => handleUpdate(i, 'purchaseDate', e.target.value)}
-                  className="form-control form-control-sm"
-                />
-              </div>
-              <button
-                onClick={() => handleRemove(i)}
-                className="btn btn-sm btn-outline-danger"
-              >
-                Remove
-              </button>
             </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );

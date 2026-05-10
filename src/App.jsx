@@ -94,10 +94,12 @@ import Ledger from './components/Customer/Ledger';
 import MonthReport from './components/Analytics/MonthReport';
 import Direct from './components/Trade/Direct';
 import ShowHSN from './components/HSN/ShowHSN';
+import PasswordGate from './components/PasswordGate';
 
 export default function App() {
   return (
     // <Router>
+    <PasswordGate>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/inventory" element={<Inventory />} />
@@ -120,6 +122,7 @@ export default function App() {
         <Route path='/showHSN' element={<ShowHSN/>}></Route>
         
       </Routes>
+    </PasswordGate>
     // </Router>
   );
 }
