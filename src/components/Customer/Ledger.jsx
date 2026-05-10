@@ -271,7 +271,7 @@ const Ledger = () => {
                             <strong>Credit: ₹{formatAmount(totals.credit)}</strong>
                         </div>
 
-                        <table className="table table-bordered">
+                        <table className="table table-bordered ledger-table">
                             <thead>
                                 <tr className="text-center">
                                     <th>Date</th>

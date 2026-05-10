@@ -9,8 +9,8 @@
 }
 
 
-table th,
-table td {
+.ledger-table th,
+.ledger-table td {
     padding: 4px 8px !important;
     line-height: 1.1 !important;
     vertical-align: middle;
