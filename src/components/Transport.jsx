@@ -1,81 +1,129 @@
 import React, { useState } from 'react';
+import ToastMessage from './ToastMessage';
 
 const Transport = () => {
-  const [form, setForm] = useState({
+  const initialForm = {
     val: '',
     date: '',
-  });
+  };
 
+  const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  const showMessage = (msg, type) => {
+    setMessage(msg);
+    setMessageType(type);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/transport/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/transport/add`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(form),
+        }
+      );
+
+      const data = await res.json();
 
       if (res.ok) {
-        setMessage('✅ Transport cost added successfully!');
-        setForm({ val: '', date: '' });
+        showMessage(
+          data.message || 'Transport cost added successfully!',
+          'success'
+        );
+        setForm(initialForm);
       } else {
-        setMessage('❌ Failed to add transport cost.');
+        showMessage(
+          data.message || 'Failed to add transport cost.',
+          'danger'
+        );
       }
     } catch (err) {
       console.error(err);
-      setMessage('❌ Error occurred while adding transport.');
+      showMessage(
+        'Error occurred while adding transport.',
+        'danger'
+      );
     }
   };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center mt-3">
-      <div className="card shadow p-4 w-100" style={{ maxWidth: '500px' }}>
-        <h3 className="text-center mb-4">Add Transport Cost</h3>
+    <>
+      <div className="mt-3 d-flex justify-content-center">
+        <div
+          className="w-100"
+          style={{ maxWidth: '500px' }}
+        >
+          <h4 className="text-center mb-4">
+            Add Transport Cost
+          </h4>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-3">
-            <label className="form-label">Transport Cost (₹)</label>
-            <input
-              type="number"
-              className="form-control"
-              name="val"
-              value={form.val}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Date</label>
-            <input
-              type="date"
-              className="form-control"
-              name="date"
-              value={form.date}
-              onChange={handleChange}
-            />
-            <div className="form-text">If left empty, current date will be used.</div>
-          </div>
-
-          <button type="submit" className="btn btn-primary w-100">
-            Add Transport
-          </button>
-
-          {message && (
-            <div className="alert alert-info text-center mt-3 mb-0">
-              {message}
+          <form onSubmit={handleSubmit}>
+            <div className="mb-3">
+              <label className="form-label">
+                Transport Cost (₹)
+              </label>
+              <input
+                type="number"
+                className="form-control"
+                name="val"
+                value={form.val}
+                onChange={handleChange}
+                required
+              />
             </div>
-          )}
-        </form>
+
+            <div className="mb-3">
+              <label className="form-label">
+                Date
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+              />
+              <div className="form-text">
+                If left empty, current date will be used.
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-100"
+            >
+              Add Transport
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+
+      <ToastMessage
+        message={message}
+        type={messageType}
+        onClose={() => {
+          setMessage('');
+          setMessageType('');
+        }}
+      />
+    </>
   );
 };
 

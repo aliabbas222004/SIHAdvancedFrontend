@@ -37,14 +37,39 @@ const Navbar = () => {
                                 Home
                             </Link>
                         </li>
-                        <li className="nav-item">
-                            <Link
-                                className={`nav-link ${location.pathname === "/direct" ? "active" : ""}`}
-                                to="/direct"
+                        <div className="dropdown">
+                            <button
+                                className="btn dropdown-toggle"
+                                type="button"
+                                id="dropdownMenuButton1"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
                             >
-                                Direct
-                            </Link>
-                        </li>
+                                Bill
+                            </button>
+                            <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li>
+                                    <a className="dropdown-item" href="/">
+                                        Create
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/direct">
+                                        Direct
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/printBill">
+                                        Print
+                                    </a>
+                                </li>
+                                <li>
+                                    <a className="dropdown-item" href="/deleteBill">
+                                        Delete
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                         <div className="dropdown">
                             <button
                                 className="btn dropdown-toggle"

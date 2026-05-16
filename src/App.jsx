@@ -95,6 +95,8 @@ import MonthReport from './components/Analytics/MonthReport';
 import Direct from './components/Trade/Direct';
 import ShowHSN from './components/HSN/ShowHSN';
 import PasswordGate from './components/PasswordGate';
+import DeleteBill from './components/Bill/DeleteBill';
+import PrintBill from './components/Bill/PrintBill';
 
 export default function App() {
   return (
@@ -120,6 +122,8 @@ export default function App() {
         <Route path='/monthReport' element={<MonthReport/>}></Route>
         <Route path='/direct' element={<Direct/>}></Route>
         <Route path='/showHSN' element={<ShowHSN/>}></Route>
+        <Route path='/deleteBill' element={<DeleteBill/>}></Route>
+        <Route path='/printBill' element={<PrintBill/>}></Route>
         
       </Routes>
     </PasswordGate>
