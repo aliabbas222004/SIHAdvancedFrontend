@@ -81,7 +81,7 @@ const PrintBill = () => {
             setMessage("");
 
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/bill/getBill/${billId}`
+                `${import.meta.env.VITE_API_URL}/api/bill/getBill/${encodeURIComponent(billId)}`
             );
 
             if (!res.ok) {
