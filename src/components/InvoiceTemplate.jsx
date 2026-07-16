@@ -56,30 +56,47 @@ const InvoiceTemplate = ({
     return `${day}-${month}-${year}`;
   };
 
+  const calcTaxValue = () => {
+    let totalCgst = 0;
+    let totalSgst = 0;
+
+    tableData.forEach(item => {
+      const total = item.finalPrice * item.selectedQuantity;   //50
+      const gstValue = item.gstValue;    //18
+
+      totalCgst +=(total-(total / (1+ gstValue*0.01)))/2;
+      totalSgst += (total-(total / (1+ gstValue*0.01)))/2;
+    });
+
+    return { totalCgst, totalSgst };
+  };
 
 
   const calculateTaxRows = () => {
     const taxMap = {};
 
     tableData.forEach(item => {
+      console.log("Item: ", item)
       const hsn = item.HSN;
       const total = item.finalPrice * item.selectedQuantity;
-
+      const gstValue = item.gstValue;
       if (!taxMap[hsn]) {
         taxMap[hsn] = {
           taxableValue: 0,
           cgst: 0,
-          sgst: 0
+          sgst: 0,
+          gstValue
         };
       }
 
       taxMap[hsn].taxableValue += total;
-      taxMap[hsn].cgst += (total * 9) / 100;
-      taxMap[hsn].sgst += (total * 9) / 100;
+      taxMap[hsn].cgst += (total * gstValue) / 200;
+      taxMap[hsn].sgst += (total * gstValue) / 200;
     });
 
     return Object.entries(taxMap).map(([hsn, values], i) => ({
       hsn,
+      gstValue: values.gstValue,
       taxableValue: values.taxableValue,
       cgst: values.cgst,
       sgst: values.sgst,
@@ -88,6 +105,7 @@ const InvoiceTemplate = ({
   };
 
   const taxRows = calculateTaxRows();
+  const { totalCgst, totalSgst } = calcTaxValue();
   const emptyTaxRowsCount = Math.max(0, 9 - taxRows.length);
   const renderInvoice = (copyLabel) => (
     <div className="invoice-container">
@@ -179,9 +197,9 @@ const InvoiceTemplate = ({
               <td>{item.HSN}</td>
               <td>{item.selectedQuantity}</td>
               <td>{item.finalPrice}</td>
-              <td>18%</td>
-              <td>{(item.finalPrice / 1.18).toFixed(2)}</td>
-              <td>{((item.finalPrice / 1.18) * item.selectedQuantity).toFixed(2)}</td>
+              <td>{item.gstValue}</td>
+              <td>{(item.finalPrice / (1 + (item.gstValue * 0.01))).toFixed(2)}</td>
+              <td>{((item.finalPrice / (1 + (item.gstValue * 0.01))) * item.selectedQuantity).toFixed(2)}</td>
             </tr>
           ))}
           {[...Array(emptyRowsCount)].map((_, idx) => (
@@ -197,7 +215,7 @@ const InvoiceTemplate = ({
             <td></td>
             <td></td>
             <td></td>
-            <td><strong>{(totalPrice / 1.18).toFixed(2)} ₹</strong></td>
+            <td><strong>{(totalPrice - totalCgst - totalSgst).toFixed(2)} ₹</strong></td>
           </tr>
           <tr className='gst'>
             <td colSpan="3" className='text-right'>SGST</td>
@@ -205,7 +223,7 @@ const InvoiceTemplate = ({
             <td></td>
             <td></td>
             <td></td>
-            <td><strong>{((totalPrice / 1.18 * 0.09).toFixed(2))} ₹</strong></td>
+            <td><strong>{(totalSgst).toFixed(2)} ₹</strong></td>
           </tr>
           <tr className='gst'>
             <td colSpan="3" className='text-right'>CGST</td>
@@ -213,7 +231,7 @@ const InvoiceTemplate = ({
             <td></td>
             <td></td>
             <td></td>
-            <td><strong>{((totalPrice / 1.18 * 0.09).toFixed(2))} ₹</strong></td>
+            <td><strong>{(totalCgst.toFixed(2))} ₹</strong></td>
           </tr>
           <tr className='gst'>
             <td colSpan="3" className='text-right'>Freight Charge/ Packaging Charge</td>
@@ -254,12 +272,12 @@ const InvoiceTemplate = ({
           {taxRows.map((row, i) => (
             <tr key={i}>
               <td>{row.hsn}</td>
-              <td>{(row.taxableValue / 1.18).toFixed(2)}</td>
-              <td>9%</td>
-              <td>{(row.taxableValue / 1.18 * 0.09).toFixed(2)}</td>
-              <td>9%</td>
-              <td>{(row.taxableValue / 1.18 * 0.09).toFixed(2)}</td>
-              <td>{(row.taxableValue / 1.18 * 0.09 * 2).toFixed(2)}</td>
+              <td>{(row.taxableValue / (row.gstValue * 0.01 + 1)).toFixed(2)}</td>
+              <td>{row.gstValue * 0.5}%</td>
+              <td>{(row.taxableValue / (row.gstValue * 0.01 + 1) * (row.gstValue * 0.005)).toFixed(2)}</td>
+              <td>{row.gstValue * 0.5}%</td>
+              <td>{(row.taxableValue / (row.gstValue * 0.01 + 1) * (row.gstValue * 0.005)).toFixed(2)}</td>
+              <td>{(row.taxableValue / (row.gstValue * 0.01 + 1) * (row.gstValue * 0.005) * 2).toFixed(2)}</td>
             </tr>
           ))}
           {[...Array(emptyTaxRowsCount)].map((_, idx) => (

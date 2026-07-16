@@ -6,6 +6,7 @@ const HSN = () => {
   const [companies, setCompanies] = useState([]);
   const [selectedType, setSelectedType] = useState('');
   const [hsn, setHsn] = useState('');
+  const [gst, setGst]= useState(18);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
 
@@ -33,7 +34,8 @@ const HSN = () => {
           body: JSON.stringify({
             company: selectedCompany,
             type: selectedType,
-            hsn
+            hsn,
+            gst: gst
           })
         }
       );
@@ -125,6 +127,21 @@ const HSN = () => {
               value={hsn}
               onChange={(e) =>
                 setHsn(e.target.value)
+              }
+            />
+          </div>
+
+          <div className="mb-3">
+            <label className="form-label">
+              GST %
+            </label>
+            <input
+              type="number"
+              className="form-control"
+              placeholder="Enter total GST %"
+              value={gst}
+              onChange={(e) =>
+                setGst(e.target.value)
               }
             />
           </div>

@@ -164,6 +164,7 @@ export default function BillForm({ items, resetItems }) {
         initialPrice: item.initialPrice,
         finalPrice: item.finalPrice,
         selectedQuantity: item.quantity,
+        gstValue: item.gstValue
       })),
       totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
       totalPrice: totalAmount,

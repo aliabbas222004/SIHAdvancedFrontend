@@ -28,6 +28,7 @@ export default function HomePage() {
             purchasePrice:item.latestPurchasePrice,
             quantity: 1,
             availableQuantity:item.quantityInStock,
+            gstValue: item.gstValue
           }
         ];
       }

@@ -90,6 +90,8 @@ const PrintBill = () => {
 
             const data = await res.json();
 
+            console.log("Hi :", data)
+
             // transform backend data -> InvoiceTemplate format
             const formattedBill = {
                 billId: data.billId,
@@ -113,7 +115,8 @@ const PrintBill = () => {
                     itemName: item.itemName || item.itemId,
                     initialPrice: item.initialPrice,
                     finalPrice: item.finalPrice,
-                    selectedQuantity: item.quantity
+                    selectedQuantity: item.quantity,
+                    gstValue: item.gstValue
                 })),
 
                 totalQuantity: data.items.reduce(
