@@ -1,351 +1,1009 @@
-import React, { useState, useEffect, useRef } from 'react';
-import InvoiceTemplate from './InvoiceTemplate';
+import React, { useState, useEffect } from 'react';
 
 export default function BillForm({ items, resetItems }) {
+
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const [date, setDate] = useState('');
   const [billId, setBillId] = useState('');
+
   const [custName, setCustName] = useState('');
   const [custPhone, setCustPhone] = useState('');
   const [billAdd, setBillAdd] = useState('');
   const [billState, setBillState] = useState('');
   const [custGST, setCustGST] = useState('');
+
   const [shipcustName, setshipCustName] = useState('');
   const [shipcustPhone, setshipCustPhone] = useState('');
   const [shipAdd, setShipAdd] = useState('');
   const [shipbillState, setshipBillState] = useState('');
   const [shipcustGST, setshipCustGST] = useState('');
+
   const [paymentMode, setPaymentMode] = useState('');
   const [sameAsBilling, setSameAsBilling] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [generatedBillData, setGeneratedBillData] = useState(null);
-  const [freightCharge_packaging, setFreightCharge_Packaging] = useState(0);
-  const invoiceRef = useRef();
 
-  const totalAmount = items.reduce((sum, item) => sum + item.finalPrice * item.quantity, 0) + freightCharge_packaging;
+  const [freightCharge_packaging, setFreightCharge_Packaging] = useState(0);
+
+
+  // =====================================================
+  // TOTAL
+  // =====================================================
+
+  const itemsTotal = items.reduce(
+    (sum, item) =>
+      sum +
+      Number(item.finalPrice || 0) *
+      Number(item.quantity || 0),
+    0
+  );
+
+  const totalAmount =
+    itemsTotal +
+    Number(freightCharge_packaging || 0);
+
+
+  // =====================================================
+  // PAYMENT MODES
+  // =====================================================
 
   const paymentModes = [
-    { _id: "CASH", name: "Cash" },
-    { _id: "DIGITAL", name: "UPI / Card / Net Banking" }
+    {
+      _id: "CASH",
+      name: "Cash"
+    },
+    {
+      _id: "DIGITAL",
+      name: "UPI / Card / Net Banking"
+    }
   ];
-  // 🔹 Fetch customers
+
+
+  // =====================================================
+  // FETCH CUSTOMERS
+  // =====================================================
+
   useEffect(() => {
+
     const fetchCustomers = async () => {
+
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/customer`);
+
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/customer`
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch customers");
+        }
+
         const data = await res.json();
+
         setCustomers(data);
+
       } catch (err) {
-        console.error("❌ Error fetching customers:", err);
+
+        console.error(
+          "❌ Error fetching customers:",
+          err
+        );
+
       }
     };
+
     fetchCustomers();
+
   }, []);
 
-  // 🔹 Auto-fill shipping if "same as billing"
+
+  // =====================================================
+  // SAME AS BILLING
+  // =====================================================
+
   useEffect(() => {
+
     if (sameAsBilling) {
+
       setshipCustName(custName);
       setshipCustPhone(custPhone);
       setShipAdd(billAdd);
       setshipBillState(billState);
       setshipCustGST(custGST);
+
     } else {
+
       setshipCustName('');
       setshipCustPhone('');
       setShipAdd('');
       setshipBillState('');
       setshipCustGST('');
-    }
-  }, [sameAsBilling, custName, custPhone, billAdd, billState, custGST]);
 
-  // 🔹 Handle customer selection
+    }
+
+  }, [
+    sameAsBilling,
+    custName,
+    custPhone,
+    billAdd,
+    billState,
+    custGST
+  ]);
+
+
+  // =====================================================
+  // CUSTOMER SELECTION
+  // =====================================================
+
   const handleCustomerChange = (e) => {
+
     const custId = e.target.value;
-    const customer = customers.find(c => c._id === custId);
+
+    const customer = customers.find(
+      c => c._id === custId
+    );
+
     setSelectedCustomer(customer);
 
     if (customer) {
-      setCustName(customer.name);
-      setCustPhone(customer.phoneNo);
-      setBillAdd(customer.address);
-      setBillState(customer.state);
+
+      setCustName(customer.name || '');
+      setCustPhone(customer.phoneNo || '');
+      setBillAdd(customer.address || '');
+      setBillState(customer.state || '');
       setCustGST(customer.GSTIN || '');
+
     }
-  };
 
-  // 🔹 Print invoice
-  useEffect(() => {
-    if (generatedBillData && invoiceRef.current) {
-      const timer = setTimeout(() => {
-        printInvoice();
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [generatedBillData]);
-
-  const printInvoice = () => {
-    const container = document.createElement('div');
-    container.id = 'print-wrapper';
-
-    const originalDiv = document.createElement('div');
-    originalDiv.innerHTML = `<div style="text-align:right;font-size:10px;">Original for Buyer</div>`;
-    const originalInvoice = document.createElement('div');
-    originalInvoice.innerHTML = document.getElementById('original-invoice')?.innerHTML || '';
-    originalDiv.appendChild(originalInvoice);
-    container.appendChild(originalDiv);
-
-    const duplicateLabel = document.createElement('div');
-    duplicateLabel.innerHTML = `<div style="text-align:right;font-size:10px;page-break-before: always;">Duplicate for Supplier</div>`;
-    const duplicateInvoice = document.createElement('div');
-    duplicateInvoice.innerHTML = document.getElementById('original-invoice')?.innerHTML || '';
-    duplicateLabel.appendChild(duplicateInvoice);
-    container.appendChild(duplicateLabel);
-
-    document.body.appendChild(container);
-    const style = document.createElement("style");
-    style.textContent = `
-    @media print {
-      body * { visibility: hidden !important; }
-      #print-wrapper, #print-wrapper * { visibility: visible !important; }
-      #print-wrapper { position: absolute; left: 0; top: 0; width: 100%; }
-    }
-  `;
-    document.head.appendChild(style);
-
-    setTimeout(() => {
-      window.print();
-      window.onafterprint = () => {
-        document.body.removeChild(container);
-        document.head.removeChild(style);
-      };
-    }, 500);
   };
 
 
+  // =====================================================
+  // GENERATE BILL
+  // =====================================================
 
-  // 🔹 Generate Bill
   const generateBill = async () => {
+
+    // ---------------------------------------------
+    // Validation
+    // ---------------------------------------------
+
+    if (!date) {
+
+      setMessage({
+        type: 'error',
+        text: 'Please select bill date.'
+      });
+
+      return;
+    }
+
+
+    if (!billId) {
+
+      setMessage({
+        type: 'error',
+        text: 'Please enter bill number.'
+      });
+
+      return;
+    }
+
+
     if (!billAdd || !shipAdd || !custPhone || !paymentMode) {
-      setMessage({ type: 'error', text: 'Please fill all required fields.' });
+
+      setMessage({
+        type: 'error',
+        text: 'Please fill all required fields.'
+      });
+
       return;
     }
+
+
     if (items.length === 0) {
-      setMessage({ type: 'error', text: 'No items selected.' });
+
+      setMessage({
+        type: 'error',
+        text: 'No items selected.'
+      });
+
       return;
     }
+
+
+    // ---------------------------------------------
+    // Stock validation
+    // ---------------------------------------------
+
     for (const item of items) {
-      if (item.availableQuantity < item.quantity) {
-        setMessage({ type: 'error', text: `You don't have enough stock for ${item.itemName}` });
+
+      if (
+        Number(item.availableQuantity || 0) <
+        Number(item.quantity || 0)
+      ) {
+
+        setMessage({
+          type: 'error',
+          text: `You don't have enough stock for ${item.itemName}`
+        });
+
         return;
       }
+
     }
 
-    const mockResponse = {
-      billDate: date,
-      billId,
-      custName,
-      phoneno: custPhone,
-      custAdd: billAdd,
-      custState: billState,
-      custGSTIN: custGST || "NA",
-      shipcustName,
-      shipcustPhone,
-      shipAdd,
-      shipbillState,
-      shipcustGST: shipcustGST || "NA",
-      tableData: items.map(item => ({
-        itemId: item.itemId,
-        HSN: item.HSN,
-        itemName: item.itemName || `Item ${item.itemId}`,
-        initialPrice: item.initialPrice,
-        finalPrice: item.finalPrice,
-        selectedQuantity: item.quantity,
-        gstValue: item.gstValue
-      })),
-      totalQuantity: items.reduce((sum, item) => sum + item.quantity, 0),
-      totalPrice: totalAmount,
-      paymentMode: paymentMode,
-      freightCharge_packaging: freightCharge_packaging
-    };
 
+    setLoading(true);
+    setMessage(null);
 
-    setGeneratedBillData(mockResponse);
-    setMessage({ type: 'success', text: 'Bill generated successfully!' });
-
-    resetItems();
-    setCustName('');
-    setCustPhone('');
-    setBillAdd('');
-    setBillState('');
-    setCustGST('');
-    setSameAsBilling(false);
 
     try {
-      await fetch(`${import.meta.env.VITE_API_URL}/inventory/update`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+
+      // =================================================
+      // BILL DATA
+      // =================================================
+
+      const billData = {
+
+        billDate: date,
+
+        billId: billId,
+
+        custName: custName,
+
+        phoneno: custPhone,
+
+        custAdd: billAdd,
+
+        custState: billState,
+
+        custGSTIN: custGST || "NA",
+
+
+        shipcustName: shipcustName,
+
+        shipcustPhone: shipcustPhone,
+
+        shipAdd: shipAdd,
+
+        shipbillState: shipbillState,
+
+        shipcustGST: shipcustGST || "NA",
+
+
+        tableData: items.map(item => ({
+
+          itemId: item.itemId,
+
+          HSN: item.HSN,
+
+          itemName:
+            item.itemName ||
+            `Item ${item.itemId}`,
+
+          initialPrice:
+            Number(item.initialPrice || 0),
+
+          finalPrice:
+            Number(item.finalPrice || 0),
+
+          selectedQuantity:
+            Number(item.quantity || 0),
+
+          gstValue:
+            Number(item.gstValue || 0)
+
+        })),
+
+
+        totalQuantity: items.reduce(
+          (sum, item) =>
+            sum +
+            Number(item.quantity || 0),
+          0
+        ),
+
+
+        totalPrice: totalAmount,
+
+
+        paymentMode: paymentMode,
+
+
+        freightCharge_packaging:
+          Number(
+            freightCharge_packaging || 0
+          )
+
+      };
+
+
+      console.log(
+        "📄 Sending bill:",
+        billData
+      );
+
+
+      // =================================================
+      // GENERATE PDF FROM BACKEND
+      // =================================================
+
+      const billResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/bill/addBill`,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify(billData)
+        }
+      );
+
+
+      // ---------------------------------------------
+      // Check response
+      // ---------------------------------------------
+
+      if (!billResponse.ok) {
+
+        let errorMessage =
+          "Failed to generate bill.";
+
+        try {
+
+          const errorData =
+            await billResponse.json();
+
+          errorMessage =
+            errorData.message ||
+            errorMessage;
+
+        } catch {
+          // Response wasn't JSON
+        }
+
+        throw new Error(
+          errorMessage
+        );
+      }
+
+
+      // =================================================
+      // RECEIVE PDF
+      // =================================================
+
+      const pdfBlob =
+        await billResponse.blob();
+
+
+      // Make sure backend actually returned PDF
+
+      if (
+        !pdfBlob ||
+        pdfBlob.size === 0
+      ) {
+
+        throw new Error(
+          "Generated PDF is empty."
+        );
+
+      }
+
+
+      // =================================================
+      // DOWNLOAD PDF
+      // =================================================
+
+      const pdfUrl =
+        window.URL.createObjectURL(
+          pdfBlob
+        );
+
+
+      const downloadLink =
+        document.createElement("a");
+
+      downloadLink.href = pdfUrl;
+
+      downloadLink.download =
+        `${billId}.pdf`;
+
+      document.body.appendChild(
+        downloadLink
+      );
+
+      downloadLink.click();
+
+      document.body.removeChild(
+        downloadLink
+      );
+
+
+      // Release memory
+
+      setTimeout(() => {
+
+        window.URL.revokeObjectURL(
+          pdfUrl
+        );
+
+      }, 1000);
+
+
+      // =================================================
+      // UPDATE INVENTORY
+      // =================================================
+
+      try {
+
+        const inventoryResponse =
+          await fetch(
+            `${import.meta.env.VITE_API_URL}/inventory/update`,
+            {
+              method: 'POST',
+
+              headers: {
+                'Content-Type':
+                  'application/json'
+              },
+
+              body: JSON.stringify({
+                items
+              })
+            }
+          );
+
+
+        if (!inventoryResponse.ok) {
+
+          console.error(
+            "⚠️ Inventory update failed."
+          );
+
+        }
+
+      } catch (inventoryError) {
+
+        console.error(
+          "❌ Inventory update error:",
+          inventoryError
+        );
+
+      }
+
+
+      // =================================================
+      // SUCCESS
+      // =================================================
+
+      setMessage({
+        type: 'success',
+        text: 'Bill generated and downloaded successfully!'
       });
 
-      await fetch(`${import.meta.env.VITE_API_URL}/api/bill/addBill`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockResponse),
-      });
+
+      // =================================================
+      // RESET FORM
+      // =================================================
+
+      resetItems();
+
+      setCustName('');
+      setCustPhone('');
+      setBillAdd('');
+      setBillState('');
+      setCustGST('');
+
+      setshipCustName('');
+      setshipCustPhone('');
+      setShipAdd('');
+      setshipBillState('');
+      setshipCustGST('');
+
+      setPaymentMode('');
+
+      setSameAsBilling(false);
+
+      setFreightCharge_Packaging(0);
+
+      setSelectedCustomer(null);
+
+
     } catch (err) {
-      console.error("❌ Error while saving bill:", err);
+
+      console.error(
+        "❌ Error while generating bill:",
+        err
+      );
+
+
+      setMessage({
+        type: 'error',
+        text:
+          err.message ||
+          'Something went wrong while generating the bill.'
+      });
+
+    } finally {
+
+      setLoading(false);
+
     }
+
   };
 
+
+  // =====================================================
+  // UI
+  // =====================================================
+
   return (
+
     <div className="container mt-4 mb-5 p-4 bg-white rounded shadow">
 
-      {/* Date & Bill ID */}
+
+      {/* ================================================
+          DATE & BILL ID
+      ================================================= */}
+
       <div className="row">
+
         <div className="col-12 col-md-6">
+
           <div className="mb-3">
-            <label className="form-label">Date</label>
-            <input type="date" className="form-control" value={date} onChange={(e) => setDate(e.target.value)} />
+
+            <label className="form-label">
+              Date
+            </label>
+
+            <input
+              type="date"
+              className="form-control"
+              value={date}
+              onChange={(e) =>
+                setDate(e.target.value)
+              }
+            />
+
           </div>
+
         </div>
+
+
         <div className="col-12 col-md-6">
+
           <div className="mb-3">
-            <label className="form-label">Bill No</label>
-            <input type="text" className="form-control" value={billId} onChange={(e) => setBillId(e.target.value)} />
+
+            <label className="form-label">
+              Bill No
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={billId}
+              onChange={(e) =>
+                setBillId(e.target.value)
+              }
+            />
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Customer Selection */}
+
+      {/* ================================================
+          CUSTOMER SELECTION
+      ================================================= */}
+
       <div className="mb-3">
-        <label className="form-label">Select Customer</label>
-        <select className="form-select" onChange={handleCustomerChange}>
-          <option value="">-- Select Customer --</option>
+
+        <label className="form-label">
+          Select Customer
+        </label>
+
+        <select
+          className="form-select"
+          onChange={handleCustomerChange}
+        >
+
+          <option value="">
+            -- Select Customer --
+          </option>
+
           {customers.map(cust => (
-            <option key={cust._id} value={cust._id}>
+
+            <option
+              key={cust._id}
+              value={cust._id}
+            >
               {cust.name} ({cust.phoneNo})
             </option>
+
           ))}
+
         </select>
+
       </div>
 
+
+      {/* ================================================
+          BILLING + SHIPPING
+      ================================================= */}
+
       <div className="row">
-        {/* Billing Details */}
+
+
+        {/* BILLING */}
+
         <div className="col-12 col-md-6">
-          <h5>Billing Details</h5>
+
+          <h5>
+            Billing Details
+          </h5>
+
+
           <div className="mb-3">
-            <label className="form-label">Customer Name</label>
-            <input type="text" className="form-control" value={custName} onChange={(e) => setCustName(e.target.value)} />
+
+            <label className="form-label">
+              Customer Name
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={custName}
+              onChange={(e) =>
+                setCustName(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Customer Phone</label>
-            <input type="tel" className="form-control" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
+
+            <label className="form-label">
+              Customer Phone
+            </label>
+
+            <input
+              type="tel"
+              className="form-control"
+              value={custPhone}
+              onChange={(e) =>
+                setCustPhone(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Billing Address</label>
-            <textarea className="form-control" rows="3" value={billAdd} onChange={(e) => setBillAdd(e.target.value)} />
+
+            <label className="form-label">
+              Billing Address
+            </label>
+
+            <textarea
+              className="form-control"
+              rows="3"
+              value={billAdd}
+              onChange={(e) =>
+                setBillAdd(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Customer State</label>
-            <input type="text" className="form-control" value={billState} onChange={(e) => setBillState(e.target.value)} />
+
+            <label className="form-label">
+              Customer State
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={billState}
+              onChange={(e) =>
+                setBillState(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Customer GST Number</label>
-            <input type="text" className="form-control" value={custGST} onChange={(e) => setCustGST(e.target.value)} />
+
+            <label className="form-label">
+              Customer GST Number
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={custGST}
+              onChange={(e) =>
+                setCustGST(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="form-check mb-3">
-            <input type="checkbox" className="form-check-input" checked={sameAsBilling} onChange={(e) => setSameAsBilling(e.target.checked)} id="sameAsBilling" />
-            <label className="form-check-label" htmlFor="sameAsBilling">
+
+            <input
+              type="checkbox"
+              className="form-check-input"
+              checked={sameAsBilling}
+              onChange={(e) =>
+                setSameAsBilling(
+                  e.target.checked
+                )
+              }
+              id="sameAsBilling"
+            />
+
+            <label
+              className="form-check-label"
+              htmlFor="sameAsBilling"
+            >
               Shipping address same as billing
             </label>
+
           </div>
+
         </div>
 
-        {/* Shipping Details */}
+
+        {/* SHIPPING */}
+
         <div className="col-12 col-md-6">
-          <h5>Shipping Details</h5>
+
+          <h5>
+            Shipping Details
+          </h5>
+
+
           <div className="mb-3">
-            <label className="form-label">Shipping Customer Name</label>
-            <input type="text" className="form-control" value={shipcustName} onChange={(e) => setshipCustName(e.target.value)} />
+
+            <label className="form-label">
+              Shipping Customer Name
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={shipcustName}
+              onChange={(e) =>
+                setshipCustName(
+                  e.target.value
+                )
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Shipping Customer Phone</label>
-            <input type="tel" className="form-control" value={shipcustPhone} onChange={(e) => setshipCustPhone(e.target.value)} />
+
+            <label className="form-label">
+              Shipping Customer Phone
+            </label>
+
+            <input
+              type="tel"
+              className="form-control"
+              value={shipcustPhone}
+              onChange={(e) =>
+                setshipCustPhone(
+                  e.target.value
+                )
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Shipping Address</label>
-            <textarea className="form-control" rows="3" value={shipAdd} onChange={(e) => setShipAdd(e.target.value)} />
+
+            <label className="form-label">
+              Shipping Address
+            </label>
+
+            <textarea
+              className="form-control"
+              rows="3"
+              value={shipAdd}
+              onChange={(e) =>
+                setShipAdd(e.target.value)
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Shipping State</label>
-            <input type="text" className="form-control" value={shipbillState} onChange={(e) => setshipBillState(e.target.value)} />
+
+            <label className="form-label">
+              Shipping State
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={shipbillState}
+              onChange={(e) =>
+                setshipBillState(
+                  e.target.value
+                )
+              }
+            />
+
           </div>
+
+
           <div className="mb-3">
-            <label className="form-label">Shipping GST Number</label>
-            <input type="text" className="form-control" value={shipcustGST} onChange={(e) => setshipCustGST(e.target.value)} />
+
+            <label className="form-label">
+              Shipping GST Number
+            </label>
+
+            <input
+              type="text"
+              className="form-control"
+              value={shipcustGST}
+              onChange={(e) =>
+                setshipCustGST(
+                  e.target.value
+                )
+              }
+            />
+
           </div>
+
         </div>
+
       </div>
+
+
+      {/* ================================================
+          PAYMENT + FREIGHT
+      ================================================= */}
 
       <div className="row">
+
         <div className="col-12 col-md-6">
+
           <div className="mb-3">
-            <label className="form-label">Select Payment Mode</label>
-            <select className="form-select" onChange={(e) => setPaymentMode(e.target.value)}>
-              <option value="">-- Select Payment Mode --</option>
+
+            <label className="form-label">
+              Select Payment Mode
+            </label>
+
+            <select
+              className="form-select"
+              value={paymentMode}
+              onChange={(e) =>
+                setPaymentMode(
+                  e.target.value
+                )
+              }
+            >
+
+              <option value="">
+                -- Select Payment Mode --
+              </option>
+
               {paymentModes.map(mode => (
-                <option key={mode._id} value={mode._id}>
+
+                <option
+                  key={mode._id}
+                  value={mode._id}
+                >
                   {mode.name}
                 </option>
+
               ))}
+
             </select>
+
           </div>
+
         </div>
+
 
         <div className="col-12 col-md-6">
+
           <div className="mb-3">
-            <label className="form-label">Freight Charge/ Packaging Charge</label>
-            <input type="number" className="form-control" value={freightCharge_packaging} onChange={(e) => setFreightCharge_Packaging(Number(e.target.value) || 0)} />
+
+            <label className="form-label">
+              Freight Charge/ Packaging Charge
+            </label>
+
+            <input
+              type="number"
+              className="form-control"
+              value={freightCharge_packaging}
+              onChange={(e) =>
+                setFreightCharge_Packaging(
+                  Number(e.target.value) || 0
+                )
+              }
+            />
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Total */}
+
+      {/* ================================================
+          TOTAL
+      ================================================= */}
+
       <div className="text-center mt-4">
-        <h4>Total Amount: ₹{totalAmount.toFixed(2)}</h4>
+
+        <h4>
+          Total Amount: ₹
+          {totalAmount.toFixed(2)}
+        </h4>
+
       </div>
 
-      {/* Message */}
+
+      {/* ================================================
+          MESSAGE
+      ================================================= */}
+
       {message && (
-        <div className={`alert mt-3 ${message.type === 'error' ? 'alert-danger' : 'alert-success'}`}>
+
+        <div
+          className={`alert mt-3 ${
+            message.type === 'error'
+              ? 'alert-danger'
+              : 'alert-success'
+          }`}
+        >
           {message.text}
         </div>
+
       )}
 
-      {/* Button */}
+
+      {/* ================================================
+          BUTTON
+      ================================================= */}
+
       <div className="text-center mt-3">
-        <button onClick={generateBill} disabled={loading} className="btn btn-primary px-5">
-          {loading ? 'Generating Bill...' : 'Generate Bill'}
+
+        <button
+          onClick={generateBill}
+          disabled={loading}
+          className="btn btn-primary px-5"
+        >
+
+          {loading
+            ? 'Generating Bill...'
+            : 'Generate Bill'}
+
         </button>
+
       </div>
 
-
-
-      {/* Template - Hidden but visible during print */}
-      {generatedBillData && (
-        <div style={{
-          display: 'none',
-          width: '800px'
-        }}>
-          <div ref={invoiceRef} id="original-invoice" className="print-wrapper">
-            <InvoiceTemplate {...generatedBillData} />
-          </div>
-        </div>
-      )}
     </div>
+
   );
+
 }
